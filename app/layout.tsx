@@ -12,7 +12,7 @@ const workSans = Work_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Ojas AI - A comprehensive Ayurvedic Diet Plan Recommender",
+  title: "Ayurvedic Diet Chart - A comprehensive Ayurvedic Diet Plan Recommender",
   description: "Personalized Ayurvedic Diet Plan Recommendation System",
 };
 

@@ -417,24 +417,22 @@ export const doshaFoods: Record<DoshaType, Record<MealNameType, FoodItem[]>> = {
 // --- Utility Function ---
 /**
  * Automatically creates a 7-day diet plan based on the specified dosha
- * by randomly selecting 2-3 suitable food items for each meal.
+ * by selecting suitable food items for each meal (deterministic).
  * @param dosha The patient's dominant dosha type.
  * @returns A fully populated DayPlan array.
  */
 export const autoCreatePlan = (dosha: DoshaType): DayPlan[] => {
-  const newPlan: DayPlan[] = daysOfWeek.map((day) => ({
-    day,
-    meals: mealsOfDay.map((meal) => {
-      const availableFoods = doshaFoods[dosha][meal.name as MealNameType];
-      // Get a random selection of 2-3 foods for the meal
-      const selectedFoods = availableFoods
-        .sort(() => 0.5 - Math.random())
-        .slice(0, Math.floor(Math.random() * 2) + 2);
-      return {
-        ...meal,
-        foodItems: selectedFoods,
-      };
-    }),
-  }));
-  return newPlan;
+  const newPlan: DayPlan[] = daysOfWeek.map((day) => ({
+    day,
+    meals: mealsOfDay.map((meal) => {
+      const availableFoods = doshaFoods[dosha][meal.name as MealNameType];
+      // Get the first 3 foods for the meal (deterministic, no randomness)
+      const selectedFoods = availableFoods.slice(0, 3);
+      return {
+        ...meal,
+        foodItems: selectedFoods,
+      };
+    }),
+  }));
+  return newPlan;
 };

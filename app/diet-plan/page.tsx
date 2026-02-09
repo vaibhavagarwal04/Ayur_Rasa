@@ -1,6 +1,10 @@
 // pages/weekly-diet.tsx
+"use client";
+
 import React from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
+import { ArrowLeft } from "lucide-react";
 
 // Dummy menu data
 const daysOfWeek = [
@@ -53,17 +57,29 @@ const patientInfo = {
   ],
 };
 
-const WeeklyDiet: React.FC = () => (
-  <>
-    <Navbar />
-    <div className="flex bg-[#f9fafb] min-h-screen font-sans">
-      {/* Sidebar */}
+const WeeklyDiet: React.FC = () => {
+  const router = useRouter();
 
-      {/* Main content */}
-      <main className="flex-1 p-8">
-        <h1 className="text-2xl font-bold mb-6 text-green-800">
-          Weekly Diet Summary
-        </h1>
+  return (
+    <>
+      <Navbar />
+      <div className="flex bg-[#f9fafb] min-h-screen font-sans">
+        {/* Sidebar */}
+
+        {/* Main content */}
+        <main className="flex-1 p-8">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="mb-6 flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition shadow-md"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Go Back</span>
+          </button>
+
+          <h1 className="text-2xl font-bold mb-6 text-green-800">
+            Weekly Diet Summary
+          </h1>
         {/* Week tabs */}
         <div className="flex items-center gap-3 mb-4">
           {daysOfWeek.map((day) => (
@@ -131,7 +147,8 @@ const WeeklyDiet: React.FC = () => (
         </div>
       </aside>
     </div>
-  </>
-);
+    </>
+  );
+};
 
 export default WeeklyDiet;

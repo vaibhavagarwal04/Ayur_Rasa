@@ -13,7 +13,7 @@ const Logo = () => (
   <Link href="/" className="hidden md:flex items-center space-x-2 group">
     <Leaf className="w-7 h-7 text-green-600 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
     <span className="text-xl md:text-2xl font-extrabold">
-      <span className="text-green-600">Ojas</span>
+      <span className="text-green-600">Diet</span>
       <span className="text-black">.AI</span>
     </span>
   </Link>
@@ -77,7 +77,7 @@ const Page = () => {
       if (email === "id-1111" && password === "1111") {
         userData = {
           name: "Demo User",
-          email: "demo@ojas.ai",
+          email: "demo@diet.ai",
           role: userRole,
           profilePicture: "https://via.placeholder.com/40",
         };

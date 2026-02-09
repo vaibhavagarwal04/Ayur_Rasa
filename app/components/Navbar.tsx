@@ -93,16 +93,6 @@ export default function Navbar() {
               Weekly Diet Plan
             </Link>
           </li>
-          <li>
-            <Link href="/remedies" className={linkClasses}>
-              Remedies
-            </Link>
-          </li>
-          <li>
-            <Link href="/contact" className={linkClasses}>
-              Contact
-            </Link>
-          </li>
         </ul>
 
         {/* Desktop Auth Buttons / Profile Icon */}
@@ -188,24 +178,6 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Weekly Diet Plan
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/remedies"
-                className={linkClasses}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Remedies
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/contact"
-                className={linkClasses}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Contact
               </Link>
             </li>
           </ul>
