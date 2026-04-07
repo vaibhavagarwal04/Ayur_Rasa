@@ -1,12 +1,13 @@
 // pages/weekly-diet.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
 import { ArrowLeft } from "lucide-react";
+import { getAuthToken, getAuthUser, patientApi, dietPlanApi } from "../lib/api";
+import { daysOfWeek as fallbackDaysOfWeek, mealsOfDay, doshaFoods } from "../data/Food";
 
-// Dummy menu data
 const daysOfWeek = [
   "Monday",
   "Tuesday",
@@ -17,58 +18,225 @@ const daysOfWeek = [
   "Sunday",
 ];
 
-const meals = [
-  {
-    time: "Breakfast",
-    hour: "7:00 AM",
-    food: "Moong Dal Khichdi",
-    calories: 250,
-  },
-  {
-    time: "Mid-Morning Snack",
-    hour: "10:00 AM",
-    food: "Fruits Bowl",
-    calories: 150,
-  },
-  {
-    time: "Lunch",
-    hour: "1:00 PM",
-    food: "Kitchari with Steamed Greens",
-    calories: 400,
-  },
-  {
-    time: "Evening Snack",
-    hour: "5:00 PM",
-    food: "Dates & Nuts",
-    calories: 120,
-  },
-  { time: "Dinner", hour: "8:00 PM", food: "Vegetable Soup", calories: 200 },
-];
+const dayIndexToName: Record<number, string> = {
+  0: "Monday",
+  1: "Tuesday",
+  2: "Wednesday",
+  3: "Thursday",
+  4: "Friday",
+  5: "Saturday",
+  6: "Sunday",
+};
 
-const patientInfo = {
-  name: "Yash Sheorey",
-  age: 22,
-  weight: 78,
-  dosha: "Vata-Pitta",
-  waterIntake: "Low",
-  plans: [
-    { date: "10/19/2023", name: "Detox Cleanse" },
-    { date: "10/20/2023", name: "Digestive Boost" },
-  ],
+const dayNameMap: Record<string, string> = {
+  mon: "Monday",
+  monday: "Monday",
+  tue: "Tuesday",
+  tuesday: "Tuesday",
+  wed: "Wednesday",
+  wednesday: "Wednesday",
+  thu: "Thursday",
+  thursday: "Thursday",
+  fri: "Friday",
+  friday: "Friday",
+  sat: "Saturday",
+  saturday: "Saturday",
+  sun: "Sunday",
+  sunday: "Sunday",
+};
+
+const normalizeDayOfWeek = (value: any) => {
+  if (typeof value === "number") {
+    return dayIndexToName[value] ?? "Monday";
+  }
+  if (typeof value === "string") {
+    return dayNameMap[value.trim().toLowerCase()] || value;
+  }
+  return "Monday";
+};
+
+const createFallbackDietPlan = (patient: any) => {
+  const doshaKey =
+    patient?.dosha?.toString()?.trim()?.charAt(0).toUpperCase() +
+    patient?.dosha?.toString()?.trim()?.slice(1).toLowerCase();
+  const doshaPlan = doshaFoods[doshaKey as keyof typeof doshaFoods] ||
+    doshaFoods.Vata;
+
+  const fallbackMeals = fallbackDaysOfWeek.flatMap((day) =>
+    mealsOfDay.map((meal) => {
+      const foodOptions = doshaPlan[meal.name as keyof typeof doshaPlan] || [];
+      const selectedFood = foodOptions[0] || {
+        id: `${meal.name}-default`,
+        name: `${meal.name} suggestion`,
+        calories: 150,
+        ayurvedicProperties: "Balanced",
+        macronutrients: {
+          protein: "Medium",
+          carbs: "Medium",
+          fats: "Medium",
+          fiber: "Medium",
+        },
+      };
+
+      return {
+        id: `${day}-${meal.name}`,
+        mealType: meal.name,
+        dayOfWeek: day,
+        time: meal.time,
+        foods: [
+          {
+            id: `${selectedFood.id}-${day}`,
+            portion: 100,
+            calories: selectedFood.calories,
+            protein: 0,
+            carbs: 0,
+            fats: 0,
+            food: { name: selectedFood.name },
+          },
+        ],
+      };
+    })
+  );
+
+  const now = new Date();
+  const endDate = new Date(now);
+  endDate.setDate(now.getDate() + 6);
+
+  return {
+    id: "fallback-plan",
+    patient: { user: { name: patient?.user?.name || "you" } },
+    doctor: { user: { name: "Ayurveda Guide" } },
+    startDate: now.toISOString(),
+    endDate: endDate.toISOString(),
+    weekNumber: 1,
+    meals: fallbackMeals,
+    recommendations: `Suggested weekly diet for ${doshaKey} dosha. Use this as a starting point and ask your doctor to personalize your meals.`,
+    notes: "This plan is generated from your assessment results.",
+    isFallback: true,
+  };
 };
 
 const WeeklyDiet: React.FC = () => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [plans, setPlans] = useState<any[]>([]);
+  const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
+  const [selectedDay, setSelectedDay] = useState(daysOfWeek[0]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const token = getAuthToken();
+    const user = getAuthUser();
+
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    if (user?.role === "DOCTOR") {
+      setError("Doctors should manage patient plans from the dashboard.");
+      setIsLoading(false);
+      return;
+    }
+
+    const loadPlans = async () => {
+      setIsLoading(true);
+      setError("");
+
+      let patient: any = null;
+      const profileResponse = await patientApi.getMyProfile();
+      
+      if (profileResponse.success && profileResponse.data?.patient) {
+        patient = profileResponse.data.patient;
+      } else {
+        // Patient profile not found, generate basic fallback
+        const basicPatient = {
+          id: "fallback",
+          dosha: "Vata",
+          user: { name: "You" },
+        };
+        const fallbackPlan = createFallbackDietPlan(basicPatient);
+        setPlans([fallbackPlan]);
+        setSelectedPlanIndex(0);
+        setSelectedDay(fallbackPlan.meals?.[0]?.dayOfWeek || daysOfWeek[0]);
+        setIsLoading(false);
+        return;
+      }
+
+      const patientId = patient.id;
+      const plansResponse = await dietPlanApi.getPatientPlans(patientId);
+
+      if (!plansResponse.success) {
+        // No backend plans, use fallback
+        const fallbackPlan = createFallbackDietPlan(patient);
+        setPlans([fallbackPlan]);
+        setSelectedPlanIndex(0);
+        setSelectedDay(fallbackPlan.meals?.[0]?.dayOfWeek || daysOfWeek[0]);
+        setIsLoading(false);
+        return;
+      }
+
+      const fetchedPlans = plansResponse.data?.dietPlans || [];
+      const normalizedPlans = fetchedPlans.map((plan: any) => ({
+        ...plan,
+        meals: (plan.meals || []).map((meal: any) => ({
+          ...meal,
+          dayOfWeek: normalizeDayOfWeek(meal.dayOfWeek),
+          foods: (meal.foods || []).map((foodItem: any) => ({
+            ...foodItem,
+            food: foodItem.food || { name: foodItem.name || "Food item" },
+          })),
+        })),
+      }));
+
+      const finalPlans =
+        normalizedPlans.length > 0
+          ? normalizedPlans
+          : [createFallbackDietPlan(patient)];
+
+      setPlans(finalPlans);
+      setSelectedPlanIndex(0);
+      setSelectedDay(
+        finalPlans?.[0]?.meals?.[0]?.dayOfWeek || daysOfWeek[0]
+      );
+      setIsLoading(false);
+    };
+
+    loadPlans();
+  }, [router]);
+
+  const activePlan = plans[selectedPlanIndex];
+  const availableDays = activePlan
+    ? Array.from(new Set(activePlan.meals?.map((meal: any) => meal.dayOfWeek) || []))
+    : daysOfWeek;
+  const dailyMeals = activePlan
+    ? activePlan.meals.filter((meal: any) => meal.dayOfWeek === selectedDay)
+    : [];
+
+  const formatDate = (value: string) => {
+    if (!value) return "-";
+    try {
+      return new Date(value).toLocaleDateString();
+    } catch {
+      return value;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading your diet plan...</p>
+      </div>
+    );
+  }
 
   return (
     <>
       <Navbar />
       <div className="flex bg-[#f9fafb] min-h-screen font-sans">
-        {/* Sidebar */}
-
-        {/* Main content */}
         <main className="flex-1 p-8">
-          {/* Back Button */}
           <button
             onClick={() => router.back()}
             className="mb-6 flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition shadow-md"
@@ -77,76 +245,160 @@ const WeeklyDiet: React.FC = () => {
             <span>Go Back</span>
           </button>
 
-          <h1 className="text-2xl font-bold mb-6 text-green-800">
-            Weekly Diet Summary
-          </h1>
-        {/* Week tabs */}
-        <div className="flex items-center gap-3 mb-4">
-          {daysOfWeek.map((day) => (
-            <button
-              key={day}
-              className="px-3 py-1 rounded bg-green-200 text-green-900 font-semibold shadow"
-            >
-              {day}
-            </button>
-          ))}
-        </div>
-        {/* Day summary cards */}
-        <div className="grid grid-cols-3 gap-8">
-          {meals.map((meal) => (
-            <div
-              key={meal.time}
-              className="bg-white rounded-xl shadow-md p-5 border mb-6"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-lg font-bold text-green-700">
-                  {meal.time}
-                </span>
-                <span className="text-sm text-gray-500">{meal.hour}</span>
-              </div>
-              <div className="mb-3 font-semibold text-gray-800">
-                {meal.food}
-              </div>
-              <div className="mb-1 text-gray-600">
-                Calories: {meal.calories} kcal
-              </div>
-              <div className="text-gray-600">Recommended: Vata, Pitta</div>
-              <div className="text-xs text-green-700 mt-2">
-                Add / Edit / Delete
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
-
-      {/* Sidebar summary */}
-      <aside className="w-80 pl-6 pr-6 pt-10 flex flex-col bg-white border-l">
-        <div className="mb-6">
-          <div className="text-lg font-bold text-green-800">
-            {patientInfo.name}, {patientInfo.age}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-green-800 mb-2">
+              Weekly Diet Plan
+            </h1>
+            <p className="text-gray-500 max-w-2xl">
+              Personalized recommendations based on your assessment and doctor’s guidance.
+            </p>
           </div>
-          <ul className="mt-2 space-y-2 text-gray-700">
-            <li>Weight: {patientInfo.weight} kg</li>
-            <li>Dosha: {patientInfo.dosha}</li>
-            <li>
-              Water Intake:{" "}
-              <span className="text-red-600">{patientInfo.waterIntake}</span>
-            </li>
-          </ul>
-        </div>
-        <div className="mb-6 border-t pt-4">
-          <div className="text-green-900 font-bold mb-2">Patient Summary</div>
-          <ul className="space-y-1 text-gray-800">
-            {patientInfo.plans.map((plan) => (
-              <li key={plan.date}>
-                <span className="text-green-800 font-medium">{plan.date}</span>:{" "}
-                {plan.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
-    </div>
+
+          {error ? (
+            <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-red-700">
+              <p className="font-semibold">{error}</p>
+              <p className="mt-2 text-sm text-gray-600">
+                {error.includes("Doctors")
+                  ? "Use the dashboard to assign a plan to your patient."
+                  : "If no plan appears, complete your assessment or contact your doctor."}
+              </p>
+            </div>
+          ) : plans.length === 0 ? (
+            <div className="rounded-3xl border border-yellow-200 bg-yellow-50 p-6 text-yellow-700">
+              <p className="font-semibold">No diet plan assigned yet.</p>
+              <p className="mt-2 text-sm text-gray-600">
+                Complete the assessment or ask your doctor to create a weekly plan.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <section className="rounded-3xl bg-white p-6 shadow-sm border border-green-100">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-gray-900">
+                      Plan for {activePlan.patient?.user?.name || "you"}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Assigned by Dr. {activePlan.doctor?.user?.name || "your doctor"}
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-2xl bg-green-50 p-4">
+                      <p className="text-xs uppercase tracking-widest text-green-700">Start</p>
+                      <p className="font-semibold text-gray-900">{formatDate(activePlan.startDate)}</p>
+                    </div>
+                    <div className="rounded-2xl bg-green-50 p-4">
+                      <p className="text-xs uppercase tracking-widest text-green-700">End</p>
+                      <p className="font-semibold text-gray-900">{formatDate(activePlan.endDate)}</p>
+                    </div>
+                    <div className="rounded-2xl bg-green-50 p-4">
+                      <p className="text-xs uppercase tracking-widest text-green-700">Week</p>
+                      <p className="font-semibold text-gray-900">{activePlan.weekNumber || 1}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-3xl bg-white p-6 shadow-sm border border-green-100">
+                <div className="mb-5 flex flex-wrap gap-3">
+                  {plans.map((plan, index) => (
+                    <button
+                      key={plan.id}
+                      onClick={() => {
+                        setSelectedPlanIndex(index);
+                        setSelectedDay(plan.meals?.[0]?.dayOfWeek || daysOfWeek[0]);
+                      }}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                        index === selectedPlanIndex
+                          ? "bg-green-700 text-white"
+                          : "bg-green-50 text-green-700 hover:bg-green-100"
+                      }`}
+                    >
+                      Plan {plans.length - index}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mb-6 flex flex-wrap gap-3">
+                  {availableDays.map((day) => (
+                    <button
+                      key={day}
+                      onClick={() => setSelectedDay(day)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                        selectedDay === day
+                          ? "bg-green-700 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+
+                {dailyMeals.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-gray-200 p-10 text-center text-gray-500">
+                    No meals assigned for {selectedDay}.
+                  </div>
+                ) : (
+                  <div className="grid gap-6">
+                    {dailyMeals.map((meal: any) => (
+                      <div key={meal.id} className="rounded-3xl bg-gray-50 p-6 border border-green-100 shadow-sm">
+                        <div className="flex justify-between items-center mb-4">
+                          <div>
+                            <h3 className="text-xl font-semibold text-gray-900">{meal.mealType}</h3>
+                            <p className="text-sm text-gray-500">{meal.time}</p>
+                          </div>
+                          <span className="text-sm text-green-700 font-semibold">{meal.dayOfWeek}</span>
+                        </div>
+
+                        <div className="space-y-4">
+                          {meal.foods?.length > 0 ? (
+                            meal.foods.map((entry: any) => (
+                              <div key={entry.id} className="rounded-2xl bg-white p-4 border border-gray-200">
+                                <div className="flex justify-between items-start gap-4">
+                                  <div>
+                                    <p className="font-semibold text-gray-900">{entry.food?.name || "Food item"}</p>
+                                    <p className="text-sm text-gray-500 mt-1">Portion: {entry.portion || "1 serving"}</p>
+                                  </div>
+                                  <div className="text-right text-sm text-gray-500">
+                                    <p>Calories: {entry.calories ?? "-"}</p>
+                                    <p>Protein: {entry.protein ?? "-"}g</p>
+                                    <p>Carbs: {entry.carbs ?? "-"}g</p>
+                                    <p>Fats: {entry.fats ?? "-"}g</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-500">No foods added for this meal yet.</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {(activePlan.recommendations || activePlan.notes) && (
+                <section className="rounded-3xl bg-white p-6 shadow-sm border border-green-100">
+                  {activePlan.recommendations && (
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Recommendations</h3>
+                      <p className="text-gray-600 mt-2">{activePlan.recommendations}</p>
+                    </div>
+                  )}
+                  {activePlan.notes && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Doctor Notes</h3>
+                      <p className="text-gray-600 mt-2">{activePlan.notes}</p>
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
     </>
   );
 };

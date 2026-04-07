@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -74,6 +75,8 @@ function Accordion({
 }
 
 export default function AssessmentResultClient() {
+  const router = useRouter();
+
   // Sample data for demonstration
   const vata = 35;
   const pitta = 25;
@@ -177,9 +180,17 @@ export default function AssessmentResultClient() {
             </h2>
           </div>
 
-          <button className="px-8 py-3 border border-emerald-600 text-emerald-600 rounded-lg font-medium hover:bg-emerald-50 transition-colors">
-            Save Result as PDF
-          </button>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <button className="px-8 py-3 border border-emerald-600 text-emerald-600 rounded-lg font-medium hover:bg-emerald-50 transition-colors">
+              Save Result as PDF
+            </button>
+            <button
+              onClick={() => router.push('/diet-plan')}
+              className="px-8 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+            >
+              View Weekly Diet Plan
+            </button>
+          </div>
         </div>
 
         {/* Pie Chart */}

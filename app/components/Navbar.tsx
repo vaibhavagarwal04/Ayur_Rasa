@@ -6,9 +6,10 @@ import { useState, useEffect } from "react";
 import { CgProfile } from "react-icons/cg";
 
 interface User {
+  id: string;
   name: string;
   email: string;
-  profilePicture: string;
+  role: string;
 }
 
 export default function Navbar() {
@@ -19,10 +20,10 @@ export default function Navbar() {
   // Check localStorage for login status on component mount and when storage changes
   useEffect(() => {
     const checkLoginStatus = () => {
-      const loginStatus = localStorage.getItem("isLoggedIn");
-      const userData = localStorage.getItem("userData");
+      const token = localStorage.getItem("token");
+      const userData = localStorage.getItem("user");
 
-      if (loginStatus === "true" && userData) {
+      if (token && userData) {
         setIsLoggedIn(true);
         setUser(JSON.parse(userData) as User);
       } else {
@@ -58,8 +59,8 @@ export default function Navbar() {
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userData");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setIsLoggedIn(false);
     setUser(null);
 
@@ -83,16 +84,27 @@ export default function Navbar() {
               Home
             </Link>
           </li>
-          <li>
-            <Link href="/assessment" className={linkClasses}>
-              Dosha Assessment
-            </Link>
-          </li>
-          <li>
-            <Link href="/diet-doc" className={linkClasses}>
-              Weekly Diet Plan
-            </Link>
-          </li>
+          {isLoggedIn && user?.role === "PATIENT" && (
+            <>
+              <li>
+                <Link href="/assessment" className={linkClasses}>
+                  Dosha Assessment
+                </Link>
+              </li>
+              <li>
+                <Link href="/diet-plan" className={linkClasses}>
+                  Weekly Diet Plan
+                </Link>
+              </li>
+            </>
+          )}
+          {isLoggedIn && user?.role === "DOCTOR" && (
+            <li>
+              <Link href="/Dashboard" className={linkClasses}>
+                Dashboard
+              </Link>
+            </li>
+          )}
         </ul>
 
         {/* Desktop Auth Buttons / Profile Icon */}
@@ -118,7 +130,7 @@ export default function Navbar() {
               <Link href="/login" className={loginButtonClasses}>
                 Login
               </Link>
-              <Link href="/signup" className={signupButtonClasses}>
+              <Link href="/login" className={signupButtonClasses}>
                 Signup
               </Link>
             </>
@@ -162,24 +174,39 @@ export default function Navbar() {
                 Home
               </Link>
             </li>
-            <li>
-              <Link
-                href="/assessment"
-                className={linkClasses}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dosha Assessment
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/diet"
-                className={linkClasses}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Weekly Diet Plan
-              </Link>
-            </li>
+            {isLoggedIn && user?.role === "PATIENT" && (
+              <>
+                <li>
+                  <Link
+                    href="/assessment"
+                    className={linkClasses}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dosha Assessment
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/diet-plan"
+                    className={linkClasses}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Weekly Diet Plan
+                  </Link>
+                </li>
+              </>
+            )}
+            {isLoggedIn && user?.role === "DOCTOR" && (
+              <li>
+                <Link
+                  href="/Dashboard"
+                  className={linkClasses}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              </li>
+            )}
           </ul>
 
           {/* Mobile Auth Buttons / Profile Icon */}
@@ -216,7 +243,7 @@ export default function Navbar() {
                   Login
                 </Link>
                 <Link
-                  href="/signup"
+                  href="/login"
                   className="block text-center border border-green-600 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 transition bg-white"
                   onClick={() => setIsMenuOpen(false)}
                 >

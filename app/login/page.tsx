@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Leaf } from "lucide-react";
-// import { CgProfile } from "react-icons/cg";
+import { authApi } from "../lib/api";
 
 // Logo Component - Hidden on mobile with md:flex
 const Logo = () => (
@@ -23,9 +23,11 @@ const Page = () => {
   const router = useRouter();
 
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
-  const [userRole, setUserRole] = useState<"patient" | "doctor" | "admin" | "">(
+  const [userRole, setUserRole] = useState<"PATIENT" | "DOCTOR" | "">(
     ""
   );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   const [fullName, setFullName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -33,81 +35,84 @@ const Page = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>("");
   const [medicalLicenseNumber, setMedicalLicenseNumber] = useState<string>("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     if (!userRole) {
-      alert("Please select a role.");
+      setError("Please select a role.");
       return;
     }
 
-    if (isRegistering) {
-      // Registration logic
-      const userData = {
-        name: fullName,
-        email: email,
-        role: userRole,
-        phoneNumber: phoneNumber,
-        profilePicture: "https://via.placeholder.com/40",
-        ...(userRole === "doctor" && { medicalLicenseNumber }),
-      };
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
 
-      // Set login status in localStorage
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userData", JSON.stringify(userData));
+    setIsLoading(true);
 
-      // Dispatch custom event to notify navbar
-      window.dispatchEvent(new Event("loginStateChange"));
+    try {
+      if (isRegistering) {
+        if (!fullName) {
+          setError("Full name is required for registration");
+          setIsLoading(false);
+          return;
+        }
 
-      console.log(`Registering as ${userRole}:`, {
-        fullName,
-        email,
-        password,
-        phoneNumber,
-        medicalLicenseNumber:
-          userRole === "doctor" ? medicalLicenseNumber : undefined,
-      });
-      alert("Registered successfully ✅");
-      router.push("/Dashboard"); // redirect after registration
-    } else {
-      // Login logic
-      let userData;
-
-      // DEMO LOGIN CHECK
-      if (email === "id-1111" && password === "1111") {
-        userData = {
-          name: "Demo User",
-          email: "demo@diet.ai",
-          role: userRole,
-          profilePicture: "https://via.placeholder.com/40",
-        };
-
-        console.log("Logged in as demo user:", {
+        // Call register API
+        const result = await authApi.register({
           email,
           password,
+          name: fullName,
           role: userRole,
+          phone: phoneNumber,
+          licenseNumber: userRole === "DOCTOR" ? medicalLicenseNumber : undefined
         });
+
+        if (!result.success) {
+          setError(result.message || "Registration failed");
+          setIsLoading(false);
+          return;
+        }
+
+        // Store token
+        const token = (result.data as any)?.token;
+        if (token) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify((result.data as any)?.user));
+          window.dispatchEvent(new Event("loginStateChange"));
+        }
+
+        alert("Registered successfully ✅");
+        router.push("/Dashboard");
       } else {
-        // Regular login (accept any credentials for demo)
-        userData = {
-          name: email.split("@")[0] || email, // Use email prefix as name
-          email: email,
-          role: userRole,
-          profilePicture: "https://via.placeholder.com/40",
-        };
+        // Call login API
+        const result = await authApi.login({
+          email,
+          password
+        });
 
-        console.log(`Logging in as ${userRole}:`, { email, password });
+        if (!result.success) {
+          setError(result.message || "Login failed");
+          setIsLoading(false);
+          return;
+        }
+
+        // Store token
+        const token = (result.data as any)?.token;
+        if (token) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify((result.data as any)?.user));
+          window.dispatchEvent(new Event("loginStateChange"));
+        }
+
+        alert("Logged in successfully ✅");
+        router.push("/Dashboard");
       }
-
-      // Set login status in localStorage
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userData", JSON.stringify(userData));
-
-      // Dispatch custom event to notify navbar
-      window.dispatchEvent(new Event("loginStateChange"));
-
-      alert("Logged in successfully ✅");
-      router.push("/Dashboard"); // redirect after login
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -249,7 +254,7 @@ const Page = () => {
                     value={userRole}
                     onChange={(e) =>
                       setUserRole(
-                        e.target.value as "patient" | "doctor" | "admin"
+                        e.target.value as "PATIENT" | "DOCTOR" | ""
                       )
                     }
                     className="w-full py-3 px-4 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:border-green-500 transition-colors duration-200 appearance-none bg-white"
@@ -257,9 +262,8 @@ const Page = () => {
                     <option value="" disabled>
                       Select a role
                     </option>
-                    <option value="patient">Patient</option>
-                    <option value="doctor">Doctor</option>
-                    <option value="admin">Admin</option>
+                    <option value="PATIENT">Patient</option>
+                    <option value="DOCTOR">Doctor</option>
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
                     <svg
@@ -273,7 +277,7 @@ const Page = () => {
                 </div>
               </div>
 
-              {isRegistering && userRole === "doctor" && (
+              {isRegistering && userRole === "DOCTOR" && (
                 <div>
                   <label
                     className="block text-gray-700 text-sm font-medium mb-2"
@@ -293,12 +297,20 @@ const Page = () => {
                 </div>
               )}
 
+              {/* Error message */}
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {error}
+                </div>
+              )}
+
               {/* Submit button */}
               <button
                 type="submit"
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
+                disabled={isLoading}
+                className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200"
               >
-                {isRegistering ? "Create Account" : "Sign In"}
+                {isLoading ? "Loading..." : isRegistering ? "Create Account" : "Sign In"}
               </button>
             </form>
 
