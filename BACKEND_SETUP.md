@@ -107,7 +107,7 @@ npm install
 
 # Update .env with API URL
 cat > .env << EOF
-NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyCpafYOqTwDHRSi2c-_H9ODPpkI6N5wguc
+GEMINI_API_KEY=your_gemini_api_key_here
 NEXT_PUBLIC_API_URL=http://localhost:5000
 EOF
 
