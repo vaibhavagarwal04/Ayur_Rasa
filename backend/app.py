@@ -4,14 +4,35 @@ import os
 import sys
 from io import StringIO
 import contextlib
+import new_new_new_new_new as model
+
+import requests
+
+def predict_dosha(age, weight, height, sleep, digestion, body_type):
+    url = "http://127.0.0.1:6000/predict"
+
+    data = {
+        "age": age,
+        "weight": weight,
+        "height": height,
+        "sleep": sleep,
+        "digestion": digestion,
+        "body_type": body_type
+    }
+
+    try:
+        response = requests.post(url, json=data)
+        return response.json().get("predicted_dosha", "Vata")
+    except:
+        return "Vata"  # fallback
 
 # Import all functions from model.py
-from new_new import (
-    ayurvedic_rules, nutrient_requirements, sign_to_effect,
-    enhanced_dessert_label, train_dessert_classifier, load_dessert_classifier,
-    predict_dessert, food_dosha_penalty, calculate_portion_sizes,
-    plan_weekly_meals, DESSERT_KEYWORDS, BREAKFAST_KEYWORDS
-)
+# from new_new_new_new_new import  (
+#     nutrient_requirements, sign_to_effect,
+#     enhanced_dessert_label, train_dessert_classifier, load_dessert_classifier,
+#     predict_dessert, food_dosha_penalty, calculate_portion_sizes,
+#     plan_weekly_meals, DESSERT_KEYWORDS, BREAKFAST_KEYWORDS
+# )
 
 # Set page config
 st.set_page_config(
@@ -130,33 +151,64 @@ def calculate_portion_grams(food, target_nutrients, meal_type):
     return int(portion_grams)
 
 # Load the pre-trained dessert classifier
-def load_dessert_model():
-    try:
-        model_dir = "dessert_model_dir"
-        if os.path.exists(model_dir):
-            # Check if the directory contains model files
-            model_files = os.listdir(model_dir)
-            if not any(f.endswith('.json') for f in model_files):
-                st.error("Model directory exists but doesn't contain model files.")
-                return None, None, None
+# def load_dessert_model():
+#     try:
+#         model_dir = "dessert_model_dir"
+#         if os.path.exists(model_dir):
+#             # Check if the directory contains model files
+#             model_files = os.listdir(model_dir)
+#             if not any(f.endswith('.json') for f in model_files):
+#                 st.error("Model directory exists but doesn't contain model files.")
+#                 return None, None, None
                 
-            dessert_tokenizer, dessert_model, dessert_label_encoder, dessert_meta = load_dessert_classifier(model_dir)
-            st.success("Dessert classifier loaded successfully!")
-            return dessert_tokenizer, dessert_model, dessert_label_encoder
-        else:
-            st.error("Pre-trained model directory 'dessert_model_dir' not found.")
-            return None, None, None
-    except Exception as e:
-        st.error(f"Error loading model: {str(e)}")
-        return None, None, None
+#             dessert_tokenizer, dessert_model, dessert_label_encoder, dessert_meta = load_dessert_classifier(model_dir)
+#             st.success("Dessert classifier loaded successfully!")
+#             return dessert_tokenizer, dessert_model, dessert_label_encoder
+#         else:
+#             st.error("Pre-trained model directory 'dessert_model_dir' not found.")
+#             return None, None, None
+#     except Exception as e:
+#         st.error(f"Error loading model: {str(e)}")
+#         return None, None, None
 
 # Load model on app start
-if not st.session_state.model_loaded:
-    with st.spinner("Loading pre-trained dessert classifier..."):
-        dessert_tokenizer, dessert_model, dessert_label_encoder = load_dessert_model()
-        if dessert_tokenizer is not None:
-            st.session_state.dessert_components = (dessert_tokenizer, dessert_model, dessert_label_encoder)
-            st.session_state.model_loaded = True
+# if not st.session_state.model_loaded:
+#     with st.spinner("Loading pre-trained dessert classifier..."):
+#         dessert_tokenizer, dessert_model, dessert_label_encoder = load_dessert_model()
+#         if dessert_tokenizer is not None:
+#             st.session_state.dessert_components = (dessert_tokenizer, dessert_model, dessert_label_encoder)
+#             st.session_state.model_loaded = True
+
+def nutrient_requirements(age, weight, height, gender, activity, goal):
+    # Simple BMR calculation
+    if gender == "male":
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5
+    else:
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161
+
+    # Activity multiplier
+    activity_map = {
+        "sedentary": 1.2,
+        "light": 1.375,
+        "moderate": 1.55,
+        "active": 1.725,
+        "athlete": 1.9
+    }
+
+    calories = bmr * activity_map.get(activity, 1.2)
+
+    # Goal adjustment
+    if goal == "loss":
+        calories -= 300
+    elif goal == "gain":
+        calories += 300
+
+    # Macros
+    protein = weight * 1.2
+    fat = calories * 0.25 / 9
+    carbs = (calories - (protein * 4 + fat * 9)) / 4
+
+    return calories, protein, fat, carbs
 
 # Sidebar for user inputs
 with st.sidebar:
@@ -183,6 +235,9 @@ with st.sidebar:
     gender = st.radio("Gender", ["male", "female"], index=0)
     weight = st.slider("Weight (kg)", 40, 150, 70)
     height = st.slider("Height (cm)", 140, 210, 170)
+    sleep = st.selectbox("Sleep Pattern", ["light", "medium", "heavy"])
+    digestion = st.selectbox("Digestion Type", ["weak", "strong", "slow"])
+    body_type = st.selectbox("Body Type", ["thin", "medium", "heavy"])
     
     st.subheader("Lifestyle & Goals")
     activity = st.selectbox(
@@ -224,53 +279,141 @@ with st.sidebar:
     st.metric("Fat", f"{fat:.1f} g")
     st.metric("Carbs", f"{carbs:.1f} g")
     
-    # Generate plan button
-    if st.button("🚀 Generate Meal Plan", type="primary"):
-        if st.session_state.dessert_components is None:
-            st.error("Dessert classifier not loaded. Please check if 'dessert_model_dir' exists with the correct model files.")
-        else:
-            dessert_tokenizer, dessert_model, dessert_label_encoder = st.session_state.dessert_components
-            
-            with st.spinner("Generating your personalized meal plan..."):
-                try:
-                    plan_df, totals_df, portion_sizes = plan_weekly_meals(
-                        df_foods,
-                        dessert_tokenizer=dessert_tokenizer,
-                        dessert_model=dessert_model,
-                        dessert_label_encoder=dessert_label_encoder,
-                        person_profile=profile
-                    )
-                    
-                    # Add portion sizes in grams to the meal plan
-                    if not plan_df.empty:
-                        # Create a copy to avoid modifying the original
-                        plan_df_with_portions = plan_df.copy()
-                        
-                        # Add portion sizes in grams
-                        portion_grams_list = []
-                        for _, row in plan_df.iterrows():
-                            meal_type = row['meal']
-                            if meal_type in portion_sizes:
-                                portion_grams = calculate_portion_grams(
-                                    row, portion_sizes[meal_type], meal_type
-                                )
-                                portion_grams_list.append(portion_grams)
-                            else:
-                                portion_grams_list.append(100)  # Default portion size
-                        
-                        plan_df_with_portions['portion_grams'] = portion_grams_list
-                        
-                        # Store results in session state
-                        st.session_state.meal_plan = plan_df_with_portions
-                        st.session_state.totals = totals_df
-                        st.session_state.portion_sizes = portion_sizes
-                    
-                    st.success("Meal plan generated successfully!")
-                    
-                except Exception as e:
-                    st.error(f"Error generating meal plan: {str(e)}")
-                    st.error("This might be due to missing meals in the dataset. Try uploading a more comprehensive foods.csv file.")
 
+            # Generate plan button
+if st.button("🚀 Generate Meal Plan", type="primary"):
+    with st.spinner("Generating your personalized meal plan..."):
+        try:
+            # 🔹 Filter foods based on predicted dosha
+
+            predicted_dosha = predict_dosha(age, weight, height, sleep, digestion, body_type)
+
+            st.subheader("🧠 Dosha Analysis")
+            st.success(f"Predicted Dosha: {predicted_dosha}")
+
+            if predicted_dosha == "Vata":
+                df_foods_filtered = df_foods[df_foods["Vata"] != "-"]
+            elif predicted_dosha == "Pitta":
+                df_foods_filtered = df_foods[df_foods["Pitta"] != "-"]
+            else:
+                df_foods_filtered = df_foods[df_foods["Kapha"] != "-"]
+            if df_foods_filtered.empty:
+                df_foods_filtered = df_foods    
+            plan_list = []
+
+            meals = ["Breakfast", "Lunch", "Dinner"]
+
+            for day in range(7):
+                for meal in meals:
+                    meal_df = df_foods_filtered[df_foods_filtered["Meal Type"] == meal]
+
+                    if not meal_df.empty:
+                        row = meal_df.sample(1).iloc[0]
+
+                        plan_list.append({
+                            "day": day,
+                            "meal": meal.lower(),
+                            "name_common": row["Food Name"],
+                            "calories_kcal": row["Calories"],
+                            "protein_g": row["Protein (g)"],
+                            "fat_g": row["Fats (g)"],
+                            "carbs_g": row["Carbs (g)"]
+                        })
+                    else:
+                       plan_list.append({
+                           "day": day,
+                           "meal": meal.lower(),
+                           "name_common": "No suitable meal found",
+                           "calories_kcal": 0,
+                           "protein_g": 0,
+                           "fat_g": 0,
+                           "carbs_g": 0 
+            })    
+
+            plan_df = pd.DataFrame(plan_list)
+
+            # Dummy portion sizes
+            portion_sizes = {
+                "breakfast": {"calories": 300, "protein": 10, "fat": 5, "carbs": 40},
+                "lunch": {"calories": 500, "protein": 20, "fat": 10, "carbs": 60},
+                "dinner": {"calories": 400, "protein": 15, "fat": 8, "carbs": 50}
+            }
+
+            # Add portion grams
+            plan_df["portion_grams"] = 100
+
+            # Totals
+            totals_df = plan_df.groupby("day")[[
+                "calories_kcal", "protein_g", "fat_g", "carbs_g"
+            ]].sum().reset_index()
+
+            totals_df.columns = ["day", "calories", "protein", "fat", "carbs"]
+
+            # Save to session state
+            st.session_state.meal_plan = plan_df
+            st.session_state.totals = totals_df
+            st.session_state.portion_sizes = portion_sizes
+
+            st.success("Meal plan generated successfully!")
+
+        except Exception as e:
+            st.error(f"Error generating meal plan: {str(e)}")
+
+            # Rename columns to match your UI
+            # plan_df.rename(columns={
+            #     "Meal Type": "meal",
+            #     "Food Name": "name_common",
+            #     "Calories": "calories_kcal",
+            #     "Protein (g)": "protein_g",
+            #     "Fats (g)": "fat_g",
+            #     "Carbs (g)": "carbs_g"
+            # }, inplace=True)
+            # plan_df["meal"] = plan_df["meal"].str.lower()
+
+            # Add day column (0–6 repeating)
+            plan_df["day"] = plan_df.groupby("meal").cumcount()
+
+            # Dummy portion sizes
+            portion_sizes = {
+                "breakfast": {"calories": 300, "protein": 10, "fat": 5, "carbs": 40},
+                "lunch": {"calories": 500, "protein": 20, "fat": 10, "carbs": 60},
+                "dinner": {"calories": 400, "protein": 15, "fat": 8, "carbs": 50}
+            }
+
+            # Add portion sizes in grams
+            plan_df_with_portions = plan_df.copy()
+
+            portion_grams_list = []
+            for _, row in plan_df.iterrows():
+                meal_type = row['meal'].lower
+
+                if meal_type in portion_sizes:
+                    portion_grams = calculate_portion_grams(
+                        row, portion_sizes[meal_type], meal_type.lower()
+                    )
+                else:
+                    portion_grams = 100
+
+                portion_grams_list.append(portion_grams)
+
+            plan_df_with_portions['portion_grams'] = portion_grams_list
+
+            # Totals
+            totals_df = plan_df_with_portions.groupby("day")[[
+                "calories_kcal", "protein_g", "fat_g", "carbs_g"
+            ]].sum().reset_index()
+
+            totals_df.columns = ["day", "calories", "protein", "fat", "carbs"]
+
+            # Store in session
+            st.session_state.meal_plan = plan_df_with_portions
+            st.session_state.totals = totals_df
+            st.session_state.portion_sizes = portion_sizes
+
+            st.success("Meal plan generated successfully!")
+
+        except Exception as e:
+            st.error(f"Error generating meal plan: {str(e)}")
 # Main content area
 if st.session_state.meal_plan is not None:
     plan_df = st.session_state.meal_plan
@@ -426,34 +569,13 @@ if st.session_state.meal_plan is not None:
             file_name="weekly_nutrition_totals.csv",
             mime="text/csv"
         )
-
-else:
     # Welcome message
-    if st.session_state.model_loaded:
-        st.info("""
-        👈 Please upload your foods.csv file and fill out your profile information in the sidebar.
-        Then click the "Generate Meal Plan" button to create your personalized Ayurvedic meal plan.
-        
-        This app will use the pre-trained dessert classifier to:
-        1. Generate a weekly meal plan tailored to your Ayurvedic profile
-        2. Provide detailed nutrition information with portion sizes in grams
-        3. Allow you to download your meal plan
-        """)
-    else:
-        st.error("""
-        Pre-trained dessert classifier not loaded. 
-        Please ensure the 'dessert_model_dir' directory exists with the trained model files.
-        """)
-        
-        if st.button("Try to reload model"):
-            with st.spinner("Reloading model..."):
-                dessert_tokenizer, dessert_model, dessert_label_encoder = load_dessert_model()
-                if dessert_tokenizer is not None:
-                    st.session_state.dessert_components = (dessert_tokenizer, dessert_model, dessert_label_encoder)
-                    st.session_state.model_loaded = True
-                    st.rerun()
-    
-    # Placeholder for food data preview
+else:
+    st.info("""
+    👈 Please upload your foods.csv file and fill out your profile information in the sidebar.
+    Then click the "Generate Meal Plan" button to create your personalized Ayurvedic meal plan.
+    """)
+
     if uploaded_file is not None:
         st.subheader("Food Data Preview")
         st.dataframe(df_foods.head(10))
