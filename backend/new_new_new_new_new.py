@@ -1,7 +1,7 @@
 import pandas as pd
 import pulp
 import numpy as np
-from transformers import pipeline
+# from transformers import pipeline
 from datetime import datetime
 import re
 from typing import Dict, List, Tuple, Set
