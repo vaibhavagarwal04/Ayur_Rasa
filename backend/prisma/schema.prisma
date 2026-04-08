@@ -56,9 +56,15 @@ model Patient {
   height    Float     // in cm
   weight    Float     // in kg
   bmi       Float?    // auto calculated
+  address   String?
+  bloodPressure String?
+  pulseRate Float?
   
-  // Health info
+  // Ayurvedic assessment
   dosha     String    // Vata, Pitta, Kapha
+  prakriti  String?
+  vikriti   String?
+  constitution String?
   doshaPercentage String? // JSON string: {vata: 30, pitta: 40, kapha: 30}
   
   // Habits
@@ -69,18 +75,21 @@ model Patient {
   physicalActivity String?
   stressLevel String?
   
-  // Medical conditions (for remedies)
+  // Medical information
   medicalConditions String?
   allergies String?
-  
+  currentMedications String?
+  lastConsultation String?
+  bmiHistory String?
+
   // Doctor assignment
   doctorId String?
   doctor   Doctor?   @relation(fields: [doctorId], references: [id], onDelete: SetNull)
-  
+
   // Relationships
   assessments Assessment[]
   dietPlans   DietPlan[]
-  
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }

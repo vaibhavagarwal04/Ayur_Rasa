@@ -66,7 +66,30 @@ router.get('/:patientId', authMiddleware, async (req: AuthRequest, res: Response
 // Update patient profile
 router.put('/:patientId', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const { age, gender, height, weight, dosha, dietaryHabits, mealFrequency, bowelMovements, waterIntake, physicalActivity, stressLevel } = req.body;
+    const {
+      age,
+      gender,
+      height,
+      weight,
+      dosha,
+      prakriti,
+      vikriti,
+      constitution,
+      address,
+      bloodPressure,
+      pulseRate,
+      dietaryHabits,
+      mealFrequency,
+      bowelMovements,
+      waterIntake,
+      physicalActivity,
+      stressLevel,
+      medicalConditions,
+      allergies,
+      currentMedications,
+      lastConsultation,
+      bmiHistory,
+    } = req.body;
 
     // Calculate BMI
     let bmi = undefined;
@@ -83,12 +106,23 @@ router.put('/:patientId', authMiddleware, async (req: AuthRequest, res: Response
         ...(weight && { weight }),
         ...(bmi && { bmi }),
         ...(dosha && { dosha }),
+        ...(prakriti && { prakriti }),
+        ...(vikriti && { vikriti }),
+        ...(constitution && { constitution }),
+        ...(address && { address }),
+        ...(bloodPressure && { bloodPressure }),
+        ...(pulseRate && { pulseRate }),
         ...(dietaryHabits && { dietaryHabits }),
         ...(mealFrequency && { mealFrequency }),
         ...(bowelMovements && { bowelMovements }),
         ...(waterIntake && { waterIntake }),
         ...(physicalActivity && { physicalActivity }),
-        ...(stressLevel && { stressLevel })
+        ...(stressLevel && { stressLevel }),
+        ...(medicalConditions && { medicalConditions }),
+        ...(allergies && { allergies }),
+        ...(currentMedications && { currentMedications }),
+        ...(lastConsultation && { lastConsultation }),
+        ...(bmiHistory && { bmiHistory: typeof bmiHistory === 'string' ? bmiHistory : JSON.stringify(bmiHistory) }),
       },
       include: {
         user: true,

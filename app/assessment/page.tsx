@@ -104,6 +104,7 @@ export default function AssessmentPage() {
   const [patientId, setPatientId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -125,8 +126,47 @@ export default function AssessmentPage() {
 
       const profileResponse = await patientApi.getMyProfile();
       if (profileResponse.success && profileResponse.data?.patient) {
-        setPatientId(profileResponse.data.patient.id);
+        const patient = profileResponse.data.patient as { id: string; assessments?: unknown[] };
+        setPatientId(patient.id);
+
+        type SavedAssessment = {
+        createdAt: string;
+        vataScore?: number;
+        pittaScore?: number;
+        kaphaScore?: number;
+        primaryDosha?: string;
+      };
+
+      const assessments = Array.isArray(patient.assessments)
+        ? (patient.assessments as SavedAssessment[])
+        : [];
+
+      if (assessments.length > 0) {
+        const latestAssessment = [...assessments].sort(
+          (a: SavedAssessment, b: SavedAssessment) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0];
+
+          const vataScore = latestAssessment.vataScore ?? 0;
+          const pittaScore = latestAssessment.pittaScore ?? 0;
+          const kaphaScore = latestAssessment.kaphaScore ?? 0;
+          const primaryDosha =
+            latestAssessment.primaryDosha ||
+            Object.entries({ vataScore, pittaScore, kaphaScore }).sort(
+              (a, b) => b[1] - a[1]
+            )[0]?.[0]?.replace('Score', '') ||
+            'Vata';
+
+          router.replace(
+            `/assessment-result?vata=${vataScore}&pitta=${pittaScore}&kapha=${kaphaScore}&primary=${encodeURIComponent(
+              primaryDosha
+            )}`
+          );
+          return;
+        }
       }
+
+      setIsLoading(false);
     };
 
     initialize();
@@ -182,6 +222,14 @@ export default function AssessmentPage() {
       `/assessment-result?vata=${vataPercent}&pitta=${pittaPercent}&kapha=${kaphaPercent}&primary=${primaryDosha}`
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+        <p className="text-gray-600">Loading your assessment...</p>
+      </div>
+    );
+  }
 
   return (
     <>

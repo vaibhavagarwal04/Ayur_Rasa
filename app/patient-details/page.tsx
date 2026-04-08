@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   FiArrowLeft,
   FiUser,
@@ -36,8 +36,7 @@ type EditablePatientFields =
 
 export default function AnshBireProfile() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const patientId = searchParams.get("patientId");
+  const [patientId, setPatientId] = useState<string | null>(null);
 
   const [patient, setPatient] = useState({
     name: "Loading...",
@@ -70,6 +69,8 @@ export default function AnshBireProfile() {
       if (!token) {
         router.replace("/login");
       }
+      const params = new URLSearchParams(window.location.search);
+      setPatientId(params.get("patientId"));
     }
   }, [router]);
 
@@ -88,7 +89,30 @@ export default function AnshBireProfile() {
         return;
       }
 
-      const loadedPatient = (response.data as any)?.patient;
+      type LoadedPatient = {
+        user?: { name?: string };
+        age?: number;
+        gender?: string;
+        height?: number;
+        weight?: number;
+        bmi?: number;
+        dietaryHabits?: string;
+        mealFrequency?: string;
+        bowelMovements?: string;
+        waterIntake?: string;
+        physicalActivity?: string;
+        stressLevel?: string;
+        adherence?: number;
+        assessments?: unknown[];
+        heartRate?: number;
+        bloodPressure?: string;
+        bodyTemperature?: number;
+        respiratoryRate?: number;
+        oxygenSaturation?: number;
+        notes?: string;
+      };
+
+      const loadedPatient = (response.data as { patient?: LoadedPatient }).patient;
       if (!loadedPatient) {
         setError("Patient not found.");
         setIsLoading(false);

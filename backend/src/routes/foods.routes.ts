@@ -3,7 +3,7 @@ import { prisma } from '../server';
 import { authMiddleware, AuthRequest } from '../utils/auth';
 import multer from 'multer';
 import fs from 'fs';
-import csv from 'csv-parse/sync';
+import { parse } from 'csv-parse/sync';
 
 const router = Router();
 const upload = multer({ dest: 'uploads/' });
@@ -78,7 +78,7 @@ router.post('/upload/csv', authMiddleware, upload.single('file'), async (req: Re
     }
 
     const fileContent = fs.readFileSync(req.file.path, 'utf-8');
-    const records = csv.parse(fileContent, {
+    const records = parse(fileContent, {
       columns: true,
       skip_empty_lines: true
     });

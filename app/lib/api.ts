@@ -36,13 +36,19 @@ async function apiCall<T>(
     }
 
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      message: error.message || 'An error occurred'
+      message: message || 'An error occurred'
     };
   }
 }
+
+type AuthResponseData = {
+  token: string;
+  user: AuthUser;
+};
 
 // Auth helpers
 export type AuthUser = {
@@ -83,13 +89,13 @@ export const authApi = {
     role: 'PATIENT' | 'DOCTOR';
     phone?: string;
     licenseNumber?: string;
-  }) => apiCall('/api/auth/register', {
+  }) => apiCall<AuthResponseData>('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload)
   }),
 
   login: (payload: { email: string; password: string }) =>
-    apiCall('/api/auth/login', {
+    apiCall<AuthResponseData>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(payload)
     }),
@@ -115,12 +121,12 @@ export const userApi = {
 // Patient API
 export const patientApi = {
   getProfile: (patientId: string) =>
-    apiCall(`/api/patients/${patientId}`),
+    apiCall<{ patient: unknown }>(`/api/patients/${patientId}`),
 
   getMyProfile: () =>
-    apiCall('/api/patients/me'),
+    apiCall<{ patient: unknown }>('/api/patients/me'),
 
-  updateProfile: (patientId: string, payload: any) =>
+  updateProfile: (patientId: string, payload: Record<string, unknown>) =>
     apiCall(`/api/patients/${patientId}`, {
       method: 'PUT',
       body: JSON.stringify(payload)
@@ -149,7 +155,7 @@ export const patientApi = {
 export const assessmentApi = {
   submit: (payload: {
     patientId: string;
-    answers: any;
+    answers: Record<string, string>;
     vataScore: number;
     pittaScore: number;
     kaphaScore: number;
@@ -187,7 +193,7 @@ export const foodApi = {
 
 // Diet Plan API
 export const dietPlanApi = {
-  create: (payload: any) =>
+  create: (payload: Record<string, unknown>) =>
     apiCall('/api/diet-plans', {
       method: 'POST',
       body: JSON.stringify(payload)
@@ -198,7 +204,7 @@ export const dietPlanApi = {
 
   getById: (planId: string) => apiCall(`/api/diet-plans/${planId}`),
 
-  update: (planId: string, payload: any) =>
+  update: (planId: string, payload: Record<string, unknown>) =>
     apiCall(`/api/diet-plans/${planId}`, {
       method: 'PUT',
       body: JSON.stringify(payload)

@@ -49,6 +49,9 @@ export default function DashboardPage() {
   });
   const [message, setMessage] = useState<string>("");
   const [formError, setFormError] = useState<string>("");
+  const [assessmentDone, setAssessmentDone] = useState<boolean>(false);
+  const [dietPlanAssigned, setDietPlanAssigned] = useState<boolean>(false);
+  const [patientStatusLoading, setPatientStatusLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -68,20 +71,34 @@ export default function DashboardPage() {
     setIsLoading(false);
   }, [router]);
 
+  type RawDoctorPatient = {
+    id: string;
+    user?: { name?: string };
+    age?: number;
+    gender?: string;
+    dosha?: string;
+  };
+
   useEffect(() => {
     if (!user || user.role !== 'DOCTOR') return;
 
     async function fetchPatients() {
       const response = await patientApi.getDoctorPatients();
       if (response.success && response.data) {
-        const doctorPatients = (response.data as any).patients || [];
-        const normalized = doctorPatients.map((patient: any) => ({
+        const doctorPatients = ((response.data as { patients?: unknown }).patients ?? []) as RawDoctorPatient[];
+        const normalized = doctorPatients.map((patient) => ({
           id: patient.id,
           name: patient.user?.name || 'Unnamed Patient',
           age: patient.age || undefined,
-          sex: patient.gender === 'Male' ? 'M' : patient.gender === 'Female' ? 'F' : 'O',
-          dosha: patient.dosha || 'Vata',
-          status: 'New',
+          sex: (
+            patient.gender === 'Male'
+              ? 'M'
+              : patient.gender === 'Female'
+              ? 'F'
+              : 'O'
+          ) as Patient['sex'],
+          dosha: (patient.dosha as Patient['dosha']) || 'Vata',
+          status: 'New' as Patient['status'],
           adherence: 0,
         }));
         setPatients(normalized);
@@ -91,6 +108,30 @@ export default function DashboardPage() {
     }
 
     fetchPatients();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user || user.role !== 'PATIENT') return;
+
+    const loadPatientStatus = async () => {
+      setPatientStatusLoading(true);
+      const response = await patientApi.getMyProfile();
+      if (response.success && response.data?.patient) {
+        const patient = response.data.patient as {
+          assessments?: unknown;
+          dietPlans?: unknown;
+        };
+        setAssessmentDone(
+          Array.isArray(patient.assessments) && patient.assessments.length > 0
+        );
+        setDietPlanAssigned(
+          Array.isArray(patient.dietPlans) && patient.dietPlans.length > 0
+        );
+      }
+      setPatientStatusLoading(false);
+    };
+
+    loadPatientStatus();
   }, [user]);
 
   const filteredPatients = useMemo(
@@ -140,16 +181,28 @@ export default function DashboardPage() {
       return;
     }
 
-    const patient = (response.data as any)?.patient;
+    const patient = (response.data as { patient?: {
+      id: string;
+      user: { name: string };
+      age?: number;
+      gender?: string;
+      dosha?: string;
+    } }).patient;
     if (patient) {
       setPatients((current) => [
         {
           id: patient.id,
           name: patient.user.name,
           age: patient.age,
-          sex: patient.gender === 'Male' ? 'M' : patient.gender === 'Female' ? 'F' : 'O',
-          dosha: patient.dosha,
-          status: 'New',
+          sex: (
+            patient.gender === 'Male'
+              ? 'M'
+              : patient.gender === 'Female'
+              ? 'F'
+              : 'O'
+          ) as Patient['sex'],
+          dosha: (patient.dosha as Patient['dosha']) || 'Vata',
+          status: 'New' as Patient['status'],
           adherence: 0,
         },
         ...current,
@@ -182,23 +235,151 @@ export default function DashboardPage() {
   }
 
   if (user.role === 'PATIENT') {
+    const assessmentTitle = assessmentDone ? 'Completed' : 'Pending';
+    const assessmentNote = assessmentDone
+      ? 'Your assessment has been completed.'
+      : 'Complete the quiz to generate your plan.';
+
+    const dietPlanTitle = dietPlanAssigned ? 'Ready' : assessmentDone ? 'Awaiting plan' : 'Not assigned';
+    const dietPlanNote = dietPlanAssigned
+      ? 'Your weekly diet plan is ready. View your diet plan now.'
+      : assessmentDone
+      ? 'Assessment done. Your plan will appear once assigned.'
+      : 'Your weekly diet will appear here after a plan is created.';
+
+    const dashboardNote = dietPlanAssigned
+      ? 'Your assessment is complete and your diet plan is ready. View your diet plan below.'
+      : assessmentDone
+      ? 'Your assessment is complete. View the result below or wait for your doctor to assign one.'
+      : 'Your personal dashboard is ready. Complete an assessment to receive a diet plan or ask your doctor to assign one.';
+
+    const primaryActionHref = dietPlanAssigned
+      ? '/diet-plan'
+      : assessmentDone
+      ? '/assessment-result'
+      : '/assessment';
+    const primaryActionLabel = dietPlanAssigned
+      ? 'View Your Diet Plan'
+      : assessmentDone
+      ? 'View Assessment Result'
+      : 'Take Assessment';
+
+    if (patientStatusLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      );
+    }
+
     return (
       <>
         <Navbar />
         <main className="min-h-screen bg-gray-50 p-6">
-          <section className="max-w-5xl mx-auto bg-white rounded-3xl shadow-xl p-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-3">Welcome back, {user.name}.</h1>
-            <p className="text-gray-600 mb-6">
-              Your personal dashboard is ready. Complete an assessment to receive a diet plan or ask your doctor to assign one.
-            </p>
-            <div className="grid gap-6 sm:grid-cols-2">
-              <PatientCard title="Assessment" value="Pending" note="Complete the quiz to generate your plan." color="green" />
-              <PatientCard title="Diet Plan" value="Not assigned" note="Your weekly diet will appear here after a plan is created." color="blue" />
+          <section className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1.7fr_0.9fr]">
+            <div className="space-y-6">
+              <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-8">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user.name}.</h1>
+                    <p className="mt-3 max-w-2xl text-gray-600">{dashboardNote}</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      onClick={() => router.push(primaryActionHref)}
+                      className="rounded-full bg-green-600 px-6 py-3 text-white font-semibold transition hover:bg-green-700"
+                    >
+                      {primaryActionLabel}
+                    </button>
+                    <button
+                      onClick={() => router.push('/profile')}
+                      className="rounded-full border border-green-600 bg-white px-6 py-3 text-green-700 font-semibold transition hover:bg-green-50"
+                    >
+                      Manage Profile
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                  <PatientCard title="Assessment" value={assessmentTitle} note={assessmentNote} color="green" />
+                  <PatientCard title="Diet Plan" value={dietPlanTitle} note={dietPlanNote} color="blue" />
+                </div>
+              </div>
+
+              <section className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-8">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-gray-900">Quick Actions</h2>
+                    <p className="mt-2 text-gray-600">Access the most important steps in one place.</p>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                  <button
+                    onClick={() => router.push(assessmentDone ? '/assessment-result' : '/assessment')}
+                    className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-left transition hover:border-green-300 hover:bg-white"
+                  >
+                    <p className="text-sm font-semibold text-gray-900">
+                      {assessmentDone ? 'View Dosha Result' : 'Dosha Assessment'}
+                    </p>
+                    <p className="mt-2 text-sm text-gray-600">
+                      {assessmentDone
+                        ? 'See your saved assessment result and next steps.'
+                        : 'Finish your quiz for a tailored diet plan.'}
+                    </p>
+                  </button>
+                  <button
+                    onClick={() => router.push('/diet-plan')}
+                    className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-left transition hover:border-green-300 hover:bg-white"
+                  >
+                    <p className="text-sm font-semibold text-gray-900">Weekly Diet Plan</p>
+                    <p className="mt-2 text-sm text-gray-600">Review your current meal recommendations.</p>
+                  </button>
+                  <button
+                    onClick={() => router.push('/contact')}
+                    className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-left transition hover:border-green-300 hover:bg-white"
+                  >
+                    <p className="text-sm font-semibold text-gray-900">Need Help?</p>
+                    <p className="mt-2 text-sm text-gray-600">Contact support or ask your doctor for guidance.</p>
+                  </button>
+                </div>
+              </section>
             </div>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <button onClick={() => router.push('/assessment')} className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl">Take Assessment</button>
-              <button onClick={() => router.push('/diet-plan')} className="border border-green-600 text-green-700 px-6 py-3 rounded-xl">Weekly Diet Plan</button>
-            </div>
+
+            <aside className="space-y-6">
+              <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900">Your Progress</h2>
+                <p className="mt-2 text-gray-600">Quick overview of your current milestones.</p>
+                <div className="mt-6 grid gap-4">
+                  <div className="rounded-3xl bg-green-50 p-5">
+                    <p className="text-sm text-green-700">Assessment Status</p>
+                    <p className="mt-2 text-2xl font-semibold text-gray-900">{assessmentTitle}</p>
+                  </div>
+                  <div className="rounded-3xl bg-blue-50 p-5">
+                    <p className="text-sm text-blue-700">Diet Plan Status</p>
+                    <p className="mt-2 text-2xl font-semibold text-gray-900">{dietPlanTitle}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900">Navigation</h2>
+                <div className="mt-5 grid gap-3">
+                  <button
+                    onClick={() => router.push('/assessment')}
+                    className="rounded-3xl border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm font-medium text-gray-900 transition hover:bg-white"
+                  >Assessment</button>
+                  <button
+                    onClick={() => router.push('/diet-plan')}
+                    className="rounded-3xl border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm font-medium text-gray-900 transition hover:bg-white"
+                  >Diet Plan</button>
+                  <button
+                    onClick={() => router.push('/profile')}
+                    className="rounded-3xl border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm font-medium text-gray-900 transition hover:bg-white"
+                  >Profile</button>
+                </div>
+              </div>
+            </aside>
           </section>
         </main>
       </>

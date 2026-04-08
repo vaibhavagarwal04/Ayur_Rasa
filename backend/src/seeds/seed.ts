@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
-import csv from 'csv-parse/sync';
+import { parse } from 'csv-parse/sync';
 import path from 'path';
 
 const prisma = new PrismaClient();
@@ -27,9 +27,7 @@ async function main() {
     
     if (fs.existsSync(csvPath)) {
       const fileContent = fs.readFileSync(csvPath, 'utf-8');
-      const records = csv.parse(fileContent, {
-        columns: true,
-        skip_empty_lines: true
+      const records = parse(fileContent, {
       });
 
       for (const record of records) {
