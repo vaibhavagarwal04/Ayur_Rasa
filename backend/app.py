@@ -6,25 +6,25 @@ from io import StringIO
 import contextlib
 import new_new_new_new_new as model
 
+import joblib
+
+model = joblib.load("../ml_model/dosha_model.pkl")
+le_sleep = joblib.load("../ml_model/le_sleep.pkl")
+le_digestion = joblib.load("../ml_model/le_digestion.pkl")
+le_body = joblib.load("../ml_model/le_body.pkl")
+le_target = joblib.load("../ml_model/le_target.pkl")
+
 import requests
 
 def predict_dosha(age, weight, height, sleep, digestion, body_type):
-    url = "http://127.0.0.1:6000/predict"
+    sleep = le_sleep.transform([sleep])[0]
+    digestion = le_digestion.transform([digestion])[0]
+    body_type = le_body.transform([body_type])[0]
 
-    data = {
-        "age": age,
-        "weight": weight,
-        "height": height,
-        "sleep": sleep,
-        "digestion": digestion,
-        "body_type": body_type
-    }
+    pred = model.predict([[age, weight, height, sleep, digestion, body_type]])
+    st.write(age, weight, height, sleep, digestion, body_type)
 
-    try:
-        response = requests.post(url, json=data)
-        return response.json().get("predicted_dosha", "Vata")
-    except:
-        return "Vata"  # fallback
+    return le_target.inverse_transform(pred)[0]
 
 # Import all functions from model.py
 # from new_new_new_new_new import  (
@@ -246,9 +246,12 @@ with st.sidebar:
         index=2
     )
     goal = st.radio("Goal", ["maintain", "loss", "gain"], index=0)
-    
+    diet_type = st.radio(
+    "Diet Preference",
+    ["All", "Vegetarian", "Non-Vegetarian"]
+)
     st.subheader("Ayurvedic Profile")
-    prakriti = st.selectbox("Prakriti", ["Vata", "Pitta", "Kapha"], index=0)
+    # prakriti = st.selectbox("Prakriti", ["Vata", "Pitta", "Kapha"], index=0)
     vikriti = st.selectbox("Vikriti", ["Vata", "Pitta", "Kapha", "None"], index=3)
     if vikriti == "None":
         vikriti = None
@@ -262,10 +265,16 @@ with st.sidebar:
     
     # Create profile dictionary
     profile = {
-        "age": age, "gender": gender, "weight": weight, "height": height,
-        "activity": activity, "goal": goal, "prakriti": prakriti, 
-        "vikriti": vikriti, "season": season, "tod": tod
-    }
+    "age": age,
+    "gender": gender,
+    "weight": weight,
+    "height": height,
+    "activity": activity,
+    "goal": goal,
+    "vikriti": vikriti,
+    "season": season,
+    "tod": tod
+}
     
     # Calculate nutrient requirements
     target_cal, protein, fat, carbs = nutrient_requirements(
@@ -287,18 +296,29 @@ if st.button("🚀 Generate Meal Plan", type="primary"):
             # 🔹 Filter foods based on predicted dosha
 
             predicted_dosha = predict_dosha(age, weight, height, sleep, digestion, body_type)
+            
 
             st.subheader("🧠 Dosha Analysis")
             st.success(f"Predicted Dosha: {predicted_dosha}")
 
+            # Dosha filter
             if predicted_dosha == "Vata":
                 df_foods_filtered = df_foods[df_foods["Vata"] != "-"]
             elif predicted_dosha == "Pitta":
                 df_foods_filtered = df_foods[df_foods["Pitta"] != "-"]
             else:
                 df_foods_filtered = df_foods[df_foods["Kapha"] != "-"]
+
+            # Diet filter
+            if diet_type == "Vegetarian":
+                df_foods_filtered = df_foods_filtered[df_foods_filtered["type"] == "veg"]
+            elif diet_type == "Non-Vegetarian":
+                df_foods_filtered = df_foods_filtered[df_foods_filtered["type"] == "non-veg"]
+
+            # Safety fallback
             if df_foods_filtered.empty:
-                df_foods_filtered = df_foods    
+                st.warning("No foods found for selected diet preference. Showing all foods.")
+                df_foods_filtered = df_foods   
             plan_list = []
 
             meals = ["Breakfast", "Lunch", "Dinner"]

@@ -29,3 +29,6 @@ age,weight,height,sleep,digestion,body_type,dosha
 25,59,168,light,weak,thin,Vata
 37,79,178,medium,strong,medium,Pitta
 53,93,185,heavy,slow,heavy,Kapha
+28,90,170,heavy,slow,heavy,Kapha
+35,95,175,medium,slow,heavy,Kapha
+40,100,180,heavy,slow,heavy,Kapha
