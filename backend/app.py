@@ -26,14 +26,6 @@ def predict_dosha(age, weight, height, sleep, digestion, body_type):
 
     return le_target.inverse_transform(pred)[0]
 
-# Import all functions from model.py
-# from new_new_new_new_new import  (
-#     nutrient_requirements, sign_to_effect,
-#     enhanced_dessert_label, train_dessert_classifier, load_dessert_classifier,
-#     predict_dessert, food_dosha_penalty, calculate_portion_sizes,
-#     plan_weekly_meals, DESSERT_KEYWORDS, BREAKFAST_KEYWORDS
-# )
-
 # Set page config
 st.set_page_config(
     page_title="Ayurvedic Meal Planner",
@@ -150,34 +142,6 @@ def calculate_portion_grams(food, target_nutrients, meal_type):
     
     return int(portion_grams)
 
-# Load the pre-trained dessert classifier
-# def load_dessert_model():
-#     try:
-#         model_dir = "dessert_model_dir"
-#         if os.path.exists(model_dir):
-#             # Check if the directory contains model files
-#             model_files = os.listdir(model_dir)
-#             if not any(f.endswith('.json') for f in model_files):
-#                 st.error("Model directory exists but doesn't contain model files.")
-#                 return None, None, None
-                
-#             dessert_tokenizer, dessert_model, dessert_label_encoder, dessert_meta = load_dessert_classifier(model_dir)
-#             st.success("Dessert classifier loaded successfully!")
-#             return dessert_tokenizer, dessert_model, dessert_label_encoder
-#         else:
-#             st.error("Pre-trained model directory 'dessert_model_dir' not found.")
-#             return None, None, None
-#     except Exception as e:
-#         st.error(f"Error loading model: {str(e)}")
-#         return None, None, None
-
-# Load model on app start
-# if not st.session_state.model_loaded:
-#     with st.spinner("Loading pre-trained dessert classifier..."):
-#         dessert_tokenizer, dessert_model, dessert_label_encoder = load_dessert_model()
-#         if dessert_tokenizer is not None:
-#             st.session_state.dessert_components = (dessert_tokenizer, dessert_model, dessert_label_encoder)
-#             st.session_state.model_loaded = True
 
 def nutrient_requirements(age, weight, height, gender, activity, goal):
     # Simple BMR calculation
@@ -379,16 +343,6 @@ if st.button("🚀 Generate Meal Plan", type="primary"):
         except Exception as e:
             st.error(f"Error generating meal plan: {str(e)}")
 
-            # Rename columns to match your UI
-            # plan_df.rename(columns={
-            #     "Meal Type": "meal",
-            #     "Food Name": "name_common",
-            #     "Calories": "calories_kcal",
-            #     "Protein (g)": "protein_g",
-            #     "Fats (g)": "fat_g",
-            #     "Carbs (g)": "carbs_g"
-            # }, inplace=True)
-            # plan_df["meal"] = plan_df["meal"].str.lower()
 
             # Add day column (0–6 repeating)
             plan_df["day"] = plan_df.groupby("meal").cumcount()
