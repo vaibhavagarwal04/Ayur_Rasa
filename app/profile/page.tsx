@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   User,
@@ -14,6 +14,7 @@ import {
   TrendingUp,
   ArrowLeft,
 } from "lucide-react";
+import { getAuthUser, getAuthToken, patientApi, userApi } from "../lib/api";
 
 // Type for BMI history entries
 type BMIEntry = {
@@ -152,37 +153,37 @@ const InputField = ({
 export default function ProfilePage() {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [patientId, setPatientId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<ProfileData>({
-    name: "Raj Kumar",
-    age: 35,
-    gender: "Male",
-    phone: "9876543210",
-    email: "raj.kumar@example.com",
-    address: "123 Wellness Street, Ayurvedic City",
-    prakriti: "Vata",
-    vikriti: "Pitta",
-    constitution: "Medium",
-    height: "175",
-    weight: "70",
-    bmi: "22.9",
-    bloodPressure: "120/80",
-    pulseRate: "72",
-    bmiHistory: [
-      { date: "2024-01-15", value: 23.5 },
-      { date: "2024-02-15", value: 23.1 },
-      { date: "2024-03-15", value: 22.9 },
-    ],
-    dietaryPreference: "Vegetarian",
-    allergies: "None",
-    mealFrequency: "3 times daily",
-    waterIntake: "8 glasses",
-    sleepPattern: "7-8 hours",
-    exerciseFrequency: "4 times weekly",
-    stressLevel: "Moderate",
-    bowelMovement: "Regular",
-    medicalConditions: "None",
-    currentMedications: "None",
-    lastConsultation: "2024-02-01",
+    name: "",
+    age: 0,
+    gender: "",
+    phone: "",
+    email: "",
+    address: "",
+    prakriti: "",
+    vikriti: "",
+    constitution: "",
+    height: "",
+    weight: "",
+    bmi: "",
+    bloodPressure: "",
+    pulseRate: "",
+    bmiHistory: [],
+    dietaryPreference: "",
+    allergies: "",
+    mealFrequency: "",
+    waterIntake: "",
+    sleepPattern: "",
+    exerciseFrequency: "",
+    stressLevel: "",
+    bowelMovement: "",
+    medicalConditions: "",
+    currentMedications: "",
+    lastConsultation: "",
   });
 
   const [tempData, setTempData] = useState<ProfileData>(profileData);
@@ -198,17 +199,209 @@ export default function ProfilePage() {
     []
   );
 
-  // Save changes
-  const handleSave = useCallback(() => {
-    setProfileData(tempData);
-    setIsEditing(false);
-  }, [tempData]);
+  type BackendPatient = {
+    user?: { name?: string; phone?: string; email?: string };
+    age?: number;
+    gender?: string;
+    address?: string;
+    prakriti?: string;
+    vikriti?: string;
+    constitution?: string;
+    height?: number;
+    weight?: number;
+    bmi?: number;
+    bloodPressure?: string;
+    pulseRate?: number;
+    bmiHistory?: string | Array<{ date: string; value: number }>;
+    dietaryHabits?: string;
+    allergies?: string;
+    mealFrequency?: string;
+    waterIntake?: string;
+    sleepPattern?: string;
+    physicalActivity?: string;
+    stressLevel?: string;
+    bowelMovements?: string;
+    medicalConditions?: string;
+    currentMedications?: string;
+    lastConsultation?: string;
+  };
+
+  const mapPatientProfile = (patient: BackendPatient): ProfileData => {
+    const user = patient.user ?? {};
+    const parsedBmiHistory = typeof patient.bmiHistory === "string"
+      ? JSON.parse(patient.bmiHistory || "[]")
+      : Array.isArray(patient.bmiHistory)
+      ? patient.bmiHistory
+      : [];
+
+    return {
+      name: user.name || "",
+      age: patient.age || 0,
+      gender: patient.gender || "",
+      phone: user.phone || "",
+      email: user.email || "",
+      address: patient.address || "",
+      prakriti: patient.prakriti || "",
+      vikriti: patient.vikriti || "",
+      constitution: patient.constitution || "",
+      height: patient.height ? String(patient.height) : "",
+      weight: patient.weight ? String(patient.weight) : "",
+      bmi: patient.bmi ? String(patient.bmi) : "",
+      bloodPressure: patient.bloodPressure || "",
+      pulseRate: patient.pulseRate ? String(patient.pulseRate) : "",
+      bmiHistory: parsedBmiHistory,
+      dietaryPreference: patient.dietaryHabits || "",
+      allergies: patient.allergies || "",
+      mealFrequency: patient.mealFrequency || "",
+      waterIntake: patient.waterIntake || "",
+      sleepPattern: patient.sleepPattern || "",
+      exerciseFrequency: patient.physicalActivity || "",
+      stressLevel: patient.stressLevel || "",
+      bowelMovement: patient.bowelMovements || "",
+      medicalConditions: patient.medicalConditions || "",
+      currentMedications: patient.currentMedications || "",
+      lastConsultation: patient.lastConsultation || "",
+    };
+  };
+
+  const handleSave = useCallback(async () => {
+    if (!patientId) {
+      setSaveError("Unable to save profile: missing patient information.");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      const userPayload: Record<string, string> = {};
+      if (tempData.name !== profileData.name) userPayload.name = tempData.name;
+      if (tempData.phone !== profileData.phone) userPayload.phone = tempData.phone;
+
+      if (Object.keys(userPayload).length > 0) {
+        const userResponse = await userApi.updateProfile(userPayload);
+        if (!userResponse.success) {
+          throw new Error(userResponse.message || "Failed to update user profile.");
+        }
+
+        const stored = localStorage.getItem("user");
+        if (stored) {
+          const updatedUser = { ...JSON.parse(stored), ...userPayload };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
+      }
+
+      const patientPayload: Record<string, unknown> = {
+        age: tempData.age,
+        gender: tempData.gender,
+        height: tempData.height ? Number(tempData.height) : undefined,
+        weight: tempData.weight ? Number(tempData.weight) : undefined,
+        address: tempData.address,
+        prakriti: tempData.prakriti,
+        vikriti: tempData.vikriti,
+        constitution: tempData.constitution,
+        bloodPressure: tempData.bloodPressure,
+        pulseRate: tempData.pulseRate ? Number(tempData.pulseRate) : undefined,
+        dietaryHabits: tempData.dietaryPreference,
+        mealFrequency: tempData.mealFrequency,
+        bowelMovements: tempData.bowelMovement,
+        waterIntake: tempData.waterIntake,
+        physicalActivity: tempData.exerciseFrequency,
+        stressLevel: tempData.stressLevel,
+        medicalConditions: tempData.medicalConditions,
+        allergies: tempData.allergies,
+        currentMedications: tempData.currentMedications,
+        lastConsultation: tempData.lastConsultation,
+        bmiHistory: JSON.stringify(tempData.bmiHistory || []),
+      };
+
+      const patientResponse = await patientApi.updateProfile(patientId, patientPayload);
+      if (!patientResponse.success) {
+        throw new Error(patientResponse.message || "Failed to save patient profile.");
+      }
+
+      setProfileData(tempData);
+      setIsEditing(false);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      setSaveError(message || "Unable to save profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [patientId, profileData, tempData]);
 
   // Cancel editing
   const handleCancel = useCallback(() => {
     setTempData(profileData);
     setIsEditing(false);
+    setSaveError("");
   }, [profileData]);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      const token = getAuthToken();
+      const authUser = getAuthUser();
+
+      if (!token || !authUser) {
+        router.replace("/login");
+        return;
+      }
+
+      const response = await patientApi.getMyProfile();
+      if (response.success && response.data?.patient) {
+        const patientProfile = response.data.patient as BackendPatient & { id?: string };
+        if (patientProfile.id) {
+          setPatientId(patientProfile.id);
+        }
+        const profile = mapPatientProfile(patientProfile);
+        setProfileData(profile);
+        setTempData(profile);
+      } else {
+        const fallbackProfile: ProfileData = {
+          name: authUser.name,
+          age: 0,
+          gender: authUser.role === "PATIENT" ? "" : "",
+          phone: "",
+          email: authUser.email,
+          address: "",
+          prakriti: "",
+          vikriti: "",
+          constitution: "",
+          height: "",
+          weight: "",
+          bmi: "",
+          bloodPressure: "",
+          pulseRate: "",
+          bmiHistory: [],
+          dietaryPreference: "",
+          allergies: "",
+          mealFrequency: "",
+          waterIntake: "",
+          sleepPattern: "",
+          exerciseFrequency: "",
+          stressLevel: "",
+          bowelMovement: "",
+          medicalConditions: "",
+          currentMedications: "",
+          lastConsultation: "",
+        };
+        setProfileData(fallbackProfile);
+        setTempData(fallbackProfile);
+      }
+
+      setIsLoading(false);
+    };
+
+    loadProfile();
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">
+        <p className="text-gray-600">Loading your profile...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
@@ -242,13 +435,15 @@ export default function ProfilePage() {
               <div className="flex gap-2">
                 <button
                   onClick={handleSave}
-                  className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg transition shadow-lg font-medium"
+                  disabled={isSaving}
+                  className={`flex items-center space-x-2 rounded-lg px-6 py-2 transition shadow-lg font-medium text-white ${isSaving ? 'bg-green-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'}`}
                 >
                   <Save className="w-4 h-4" />
-                  <span>Save</span>
+                  <span>{isSaving ? 'Saving...' : 'Save'}</span>
                 </button>
                 <button
                   onClick={handleCancel}
+                  disabled={isSaving}
                   className="flex items-center space-x-2 bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg transition shadow-lg font-medium"
                 >
                   <X className="w-4 h-4" />
@@ -261,6 +456,11 @@ export default function ProfilePage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
+        {saveError && (
+          <div className="mb-6 rounded-2xl bg-red-50 border border-red-200 p-4 text-red-700">
+            {saveError}
+          </div>
+        )}
         {/* Personal Information */}
         <section className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
           <SectionHeader icon={User} title="Personal Information" />
