@@ -6,33 +6,25 @@ from io import StringIO
 import contextlib
 import new_new_new_new_new as model
 
+import joblib
+
+model = joblib.load("../ml_model/dosha_model.pkl")
+le_sleep = joblib.load("../ml_model/le_sleep.pkl")
+le_digestion = joblib.load("../ml_model/le_digestion.pkl")
+le_body = joblib.load("../ml_model/le_body.pkl")
+le_target = joblib.load("../ml_model/le_target.pkl")
+
 import requests
 
 def predict_dosha(age, weight, height, sleep, digestion, body_type):
-    url = "http://127.0.0.1:6000/predict"
+    sleep = le_sleep.transform([sleep])[0]
+    digestion = le_digestion.transform([digestion])[0]
+    body_type = le_body.transform([body_type])[0]
 
-    data = {
-        "age": age,
-        "weight": weight,
-        "height": height,
-        "sleep": sleep,
-        "digestion": digestion,
-        "body_type": body_type
-    }
+    pred = model.predict([[age, weight, height, sleep, digestion, body_type]])
+    st.write(age, weight, height, sleep, digestion, body_type)
 
-    try:
-        response = requests.post(url, json=data)
-        return response.json().get("predicted_dosha", "Vata")
-    except:
-        return "Vata"  # fallback
-
-# Import all functions from model.py
-# from new_new_new_new_new import  (
-#     nutrient_requirements, sign_to_effect,
-#     enhanced_dessert_label, train_dessert_classifier, load_dessert_classifier,
-#     predict_dessert, food_dosha_penalty, calculate_portion_sizes,
-#     plan_weekly_meals, DESSERT_KEYWORDS, BREAKFAST_KEYWORDS
-# )
+    return le_target.inverse_transform(pred)[0]
 
 # Set page config
 st.set_page_config(
@@ -150,34 +142,6 @@ def calculate_portion_grams(food, target_nutrients, meal_type):
     
     return int(portion_grams)
 
-# Load the pre-trained dessert classifier
-# def load_dessert_model():
-#     try:
-#         model_dir = "dessert_model_dir"
-#         if os.path.exists(model_dir):
-#             # Check if the directory contains model files
-#             model_files = os.listdir(model_dir)
-#             if not any(f.endswith('.json') for f in model_files):
-#                 st.error("Model directory exists but doesn't contain model files.")
-#                 return None, None, None
-                
-#             dessert_tokenizer, dessert_model, dessert_label_encoder, dessert_meta = load_dessert_classifier(model_dir)
-#             st.success("Dessert classifier loaded successfully!")
-#             return dessert_tokenizer, dessert_model, dessert_label_encoder
-#         else:
-#             st.error("Pre-trained model directory 'dessert_model_dir' not found.")
-#             return None, None, None
-#     except Exception as e:
-#         st.error(f"Error loading model: {str(e)}")
-#         return None, None, None
-
-# Load model on app start
-# if not st.session_state.model_loaded:
-#     with st.spinner("Loading pre-trained dessert classifier..."):
-#         dessert_tokenizer, dessert_model, dessert_label_encoder = load_dessert_model()
-#         if dessert_tokenizer is not None:
-#             st.session_state.dessert_components = (dessert_tokenizer, dessert_model, dessert_label_encoder)
-#             st.session_state.model_loaded = True
 
 def nutrient_requirements(age, weight, height, gender, activity, goal):
     # Simple BMR calculation
@@ -246,9 +210,12 @@ with st.sidebar:
         index=2
     )
     goal = st.radio("Goal", ["maintain", "loss", "gain"], index=0)
-    
+    diet_type = st.radio(
+    "Diet Preference",
+    ["All", "Vegetarian", "Non-Vegetarian"]
+)
     st.subheader("Ayurvedic Profile")
-    prakriti = st.selectbox("Prakriti", ["Vata", "Pitta", "Kapha"], index=0)
+    # prakriti = st.selectbox("Prakriti", ["Vata", "Pitta", "Kapha"], index=0)
     vikriti = st.selectbox("Vikriti", ["Vata", "Pitta", "Kapha", "None"], index=3)
     if vikriti == "None":
         vikriti = None
@@ -262,10 +229,16 @@ with st.sidebar:
     
     # Create profile dictionary
     profile = {
-        "age": age, "gender": gender, "weight": weight, "height": height,
-        "activity": activity, "goal": goal, "prakriti": prakriti, 
-        "vikriti": vikriti, "season": season, "tod": tod
-    }
+    "age": age,
+    "gender": gender,
+    "weight": weight,
+    "height": height,
+    "activity": activity,
+    "goal": goal,
+    "vikriti": vikriti,
+    "season": season,
+    "tod": tod
+}
     
     # Calculate nutrient requirements
     target_cal, protein, fat, carbs = nutrient_requirements(
@@ -287,18 +260,29 @@ if st.button("🚀 Generate Meal Plan", type="primary"):
             # 🔹 Filter foods based on predicted dosha
 
             predicted_dosha = predict_dosha(age, weight, height, sleep, digestion, body_type)
+            
 
             st.subheader("🧠 Dosha Analysis")
             st.success(f"Predicted Dosha: {predicted_dosha}")
 
+            # Dosha filter
             if predicted_dosha == "Vata":
                 df_foods_filtered = df_foods[df_foods["Vata"] != "-"]
             elif predicted_dosha == "Pitta":
                 df_foods_filtered = df_foods[df_foods["Pitta"] != "-"]
             else:
                 df_foods_filtered = df_foods[df_foods["Kapha"] != "-"]
+
+            # Diet filter
+            if diet_type == "Vegetarian":
+                df_foods_filtered = df_foods_filtered[df_foods_filtered["type"] == "veg"]
+            elif diet_type == "Non-Vegetarian":
+                df_foods_filtered = df_foods_filtered[df_foods_filtered["type"] == "non-veg"]
+
+            # Safety fallback
             if df_foods_filtered.empty:
-                df_foods_filtered = df_foods    
+                st.warning("No foods found for selected diet preference. Showing all foods.")
+                df_foods_filtered = df_foods   
             plan_list = []
 
             meals = ["Breakfast", "Lunch", "Dinner"]
@@ -359,16 +343,6 @@ if st.button("🚀 Generate Meal Plan", type="primary"):
         except Exception as e:
             st.error(f"Error generating meal plan: {str(e)}")
 
-            # Rename columns to match your UI
-            # plan_df.rename(columns={
-            #     "Meal Type": "meal",
-            #     "Food Name": "name_common",
-            #     "Calories": "calories_kcal",
-            #     "Protein (g)": "protein_g",
-            #     "Fats (g)": "fat_g",
-            #     "Carbs (g)": "carbs_g"
-            # }, inplace=True)
-            # plan_df["meal"] = plan_df["meal"].str.lower()
 
             # Add day column (0–6 repeating)
             plan_df["day"] = plan_df.groupby("meal").cumcount()
