@@ -3,7 +3,10 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="flex flex-col md:flex-row items-center justify-between px-3 pb-2 md:px-38 py-20 bg-[#ececec]">
+    <section
+      id="home"
+      className="flex flex-col md:flex-row items-center justify-between px-3 pb-2 md:px-38 py-20 bg-[#ececec]"
+    >
       <div
         className="mb-8 md:mb-0 flex justify-center md:hidden"
         data-aos="fade-down"

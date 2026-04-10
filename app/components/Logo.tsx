@@ -11,7 +11,7 @@ const Logo = () => {
       {/* Text */}
       <span className="text-xl md:text-2xl font-extrabold">
         <span className="text-green-600">AYUR </span>
-        <span className="text-white">RASA</span>
+        <span className="text-gray-900">RASA</span>
       </span>
     </Link>
   );

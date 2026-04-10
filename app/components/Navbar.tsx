@@ -19,8 +19,12 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const pathname = usePathname() || "/";
 
-  const navLinkClass = (href: string) =>
-    `transition ${pathname === href ? "text-green-600 font-semibold" : "text-gray-700 hover:text-green-600"}`;
+  const getBasePath = (href: string) => href.split("#")[0] || "/";
+
+  const navLinkClass = (href: string) => {
+    const basePath = getBasePath(href);
+    return `transition ${pathname === basePath ? "text-green-600 font-semibold" : "text-gray-700 hover:text-green-600"}`;
+  };
 
   // Check localStorage for login status on component mount and when storage changes
   useEffect(() => {
@@ -56,6 +60,8 @@ export default function Navbar() {
     "bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition";
   const signupButtonClasses =
     "ml-3 border border-green-600 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100 transition bg-white";
+  const profileButtonClasses =
+    "group flex items-center gap-3 rounded-full border border-green-100 bg-green-50 px-4 py-2 text-gray-800 transition hover:border-green-200 hover:bg-green-100";
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -77,15 +83,27 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm relative z-40">
+    <nav className="sticky top-0 bg-white/95 border-b border-gray-200 shadow-sm backdrop-blur-sm z-40">
       <div className="flex items-center justify-between py-4 px-6 md:px-16">
         <Logo />
 
         {/* Desktop Navigation links */}
         <ul className="hidden md:flex items-center gap-8">
           <li>
-            <Link href="/" className={navLinkClass("/")}>
-              Home
+            <Link href="/#home" className={navLinkClass("/#home")}>Home</Link>
+          </li>
+          <li>
+            <Link href="/#features" className={navLinkClass("/#features")}>Features</Link>
+          </li>
+          <li>
+            <Link href="/#dosha" className={navLinkClass("/#dosha")}>Dosha</Link>
+          </li>
+          <li>
+            <Link
+              href="/#how-it-works"
+              className={navLinkClass("/#how-it-works")}
+            >
+              How it Works
             </Link>
           </li>
           {isLoggedIn && user?.role === "PATIENT" && (
@@ -117,10 +135,15 @@ export default function Navbar() {
             <>
               <Link
                 href="/profile"
-                className="flex items-center text-white space-x-2"
+                className={profileButtonClasses}
+                aria-label="View profile"
               >
-                <CgProfile size={32} className="text-white" />
-                <span>{user.name}</span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-green-600 text-white shadow-sm transition group-hover:bg-green-700">
+                  <CgProfile size={22} />
+                </span>
+                <span className="max-w-32 truncate text-sm font-semibold text-gray-800">
+                  {user.name}
+                </span>
               </Link>
               <button
                 onClick={handleLogout}
@@ -143,7 +166,7 @@ export default function Navbar() {
 
         {/* Mobile hamburger button */}
         <button
-          className="md:hidden text-white focus:outline-none focus:ring-2 focus:ring-green-600 p-2 rounded"
+          className="md:hidden text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600 p-2 rounded"
           onClick={toggleMenu}
           aria-label="Toggle navigation menu"
         >
@@ -171,11 +194,38 @@ export default function Navbar() {
           <ul className="py-4 px-6 space-y-4">
             <li>
               <Link
-                href="/"
-                className={navLinkClass("/")}
+                href="/#home"
+                className={navLinkClass("/#home")}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/#features"
+                className={navLinkClass("/#features")}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Features
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/#dosha"
+                className={navLinkClass("/#dosha")}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dosha
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/#how-it-works"
+                className={navLinkClass("/#how-it-works")}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                How it Works
               </Link>
             </li>
             {isLoggedIn && user?.role === "PATIENT" && (
@@ -217,16 +267,16 @@ export default function Navbar() {
           <div className="px-6 pb-4 space-y-3">
             {isLoggedIn && user ? (
               <>
-                <div className="text-white text-center text-sm mb-2">
+                <div className="text-gray-700 text-center text-sm mb-2">
                   Welcome, {user.name}!
                 </div>
                 <Link
                   href="/profile"
-                  className="block text-center border border-white text-white px-4 py-2 rounded-lg transition"
+                  className="block rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-center text-green-800 transition hover:bg-green-100"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <div className="flex justify-center items-center space-x-2">
-                    <CgProfile size={24} className="text-white" />
+                    <CgProfile size={24} className="text-green-700" />
                     <span>View Profile</span>
                   </div>
                 </Link>

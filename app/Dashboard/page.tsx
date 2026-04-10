@@ -3,7 +3,17 @@
 import type React from "react";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { FiPlus, FiUsers, FiActivity, FiAlertTriangle, FiRefreshCw } from "react-icons/fi";
+import {
+  FiPlus,
+  FiUsers,
+  FiActivity,
+  FiAlertTriangle,
+  FiRefreshCw,
+  FiClipboard,
+  FiUser,
+  FiSearch,
+  FiArrowRight,
+} from "react-icons/fi";
 import Navbar from "../components/Navbar";
 import { getAuthUser, getAuthToken, clearAuthSession, patientApi } from "../lib/api";
 
@@ -235,33 +245,26 @@ export default function DashboardPage() {
   }
 
   if (user.role === 'PATIENT') {
+    const dietPlanCompleted = dietPlanAssigned || assessmentDone;
     const assessmentTitle = assessmentDone ? 'Completed' : 'Pending';
     const assessmentNote = assessmentDone
       ? 'Your assessment has been completed.'
       : 'Complete the quiz to generate your plan.';
 
-    const dietPlanTitle = dietPlanAssigned ? 'Ready' : assessmentDone ? 'Awaiting plan' : 'Not assigned';
-    const dietPlanNote = dietPlanAssigned
-      ? 'Your weekly diet plan is ready. View your diet plan now.'
-      : assessmentDone
-      ? 'Assessment done. Your plan will appear once assigned.'
+    const dietPlanTitle = dietPlanCompleted ? 'Completed' : 'Not assigned';
+    const dietPlanNote = dietPlanCompleted
+      ? 'Your weekly diet plan is ready. Open it now to review your meals.'
       : 'Your weekly diet will appear here after a plan is created.';
 
-    const dashboardNote = dietPlanAssigned
-      ? 'Your assessment is complete and your diet plan is ready. View your diet plan below.'
-      : assessmentDone
-      ? 'Your assessment is complete. View the result below or wait for your doctor to assign one.'
+    const dashboardNote = dietPlanCompleted
+      ? 'Your assessment is complete and your weekly diet plan is ready. Open it below.'
       : 'Your personal dashboard is ready. Complete an assessment to receive a diet plan or ask your doctor to assign one.';
 
-    const primaryActionHref = dietPlanAssigned
+    const primaryActionHref = dietPlanCompleted
       ? '/diet-plan'
-      : assessmentDone
-      ? '/assessment-result'
       : '/assessment';
-    const primaryActionLabel = dietPlanAssigned
+    const primaryActionLabel = dietPlanCompleted
       ? 'View Your Diet Plan'
-      : assessmentDone
-      ? 'View Assessment Result'
       : 'Take Assessment';
 
     if (patientStatusLoading) {
@@ -275,38 +278,44 @@ export default function DashboardPage() {
     return (
       <>
         <Navbar />
-        <main className="min-h-screen bg-gray-50 p-6">
+        <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(187,247,208,0.25),_transparent_30%),linear-gradient(180deg,#f8fdf8_0%,#f3f6fb_100%)] p-6">
           <section className="max-w-6xl mx-auto grid gap-8 lg:grid-cols-[1.7fr_0.9fr]">
             <div className="space-y-6">
-              <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-8">
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user.name}.</h1>
-                    <p className="mt-3 max-w-2xl text-gray-600">{dashboardNote}</p>
+              <div className="overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-[0_24px_70px_-36px_rgba(22,101,52,0.32)]">
+                <div className="bg-[linear-gradient(135deg,rgba(21,128,61,0.08),rgba(224,242,254,0.5))] p-8">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/85 px-4 py-2 text-sm font-medium text-green-800 shadow-sm">
+                    <FiClipboard />
+                    Personal dashboard
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <button
-                      onClick={() => router.push(primaryActionHref)}
-                      className="rounded-full bg-green-600 px-6 py-3 text-white font-semibold transition hover:bg-green-700"
-                    >
-                      {primaryActionLabel}
-                    </button>
-                    <button
-                      onClick={() => router.push('/profile')}
-                      className="rounded-full border border-green-600 bg-white px-6 py-3 text-green-700 font-semibold transition hover:bg-green-50"
-                    >
-                      Manage Profile
-                    </button>
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user.name}.</h1>
+                      <p className="mt-3 max-w-2xl text-gray-600">{dashboardNote}</p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button
+                        onClick={() => router.push(primaryActionHref)}
+                        className="rounded-full bg-green-600 px-6 py-3 text-white font-semibold transition hover:bg-green-700"
+                      >
+                        {primaryActionLabel}
+                      </button>
+                      <button
+                        onClick={() => router.push('/profile')}
+                        className="rounded-full border border-green-600 bg-white px-6 py-3 text-green-700 font-semibold transition hover:bg-green-50"
+                      >
+                        Manage Profile
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 border-t border-green-100 p-8 sm:grid-cols-2">
                   <PatientCard title="Assessment" value={assessmentTitle} note={assessmentNote} color="green" />
                   <PatientCard title="Diet Plan" value={dietPlanTitle} note={dietPlanNote} color="blue" />
                 </div>
               </div>
 
-              <section className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-8">
+              <section className="bg-white rounded-[2rem] border border-green-100 shadow-sm p-8">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-2xl font-semibold text-gray-900">Quick Actions</h2>
@@ -315,39 +324,35 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                  <button
-                    onClick={() => router.push(assessmentDone ? '/assessment-result' : '/assessment')}
-                    className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-left transition hover:border-green-300 hover:bg-white"
-                  >
-                    <p className="text-sm font-semibold text-gray-900">
-                      {assessmentDone ? 'View Dosha Result' : 'Dosha Assessment'}
-                    </p>
-                    <p className="mt-2 text-sm text-gray-600">
-                      {assessmentDone
-                        ? 'See your saved assessment result and next steps.'
-                        : 'Finish your quiz for a tailored diet plan.'}
-                    </p>
-                  </button>
-                  <button
+                  <DashboardActionCard
+                    onClick={() => router.push(assessmentDone ? '/diet-plan' : '/assessment')}
+                    title={assessmentDone ? 'Open Diet Plan' : 'Dosha Assessment'}
+                    note={assessmentDone
+                      ? 'Your assessment is complete. Go straight to your weekly diet plan.'
+                      : 'Finish your quiz for a tailored diet plan.'}
+                    icon={<FiClipboard className="text-green-700 text-xl" />}
+                    tone="green"
+                  />
+                  <DashboardActionCard
                     onClick={() => router.push('/diet-plan')}
-                    className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-left transition hover:border-green-300 hover:bg-white"
-                  >
-                    <p className="text-sm font-semibold text-gray-900">Weekly Diet Plan</p>
-                    <p className="mt-2 text-sm text-gray-600">Review your current meal recommendations.</p>
-                  </button>
-                  <button
+                    title="Weekly Diet Plan"
+                    note="Review your current meal recommendations and daily meal structure."
+                    icon={<FiActivity className="text-sky-700 text-xl" />}
+                    tone="blue"
+                  />
+                  <DashboardActionCard
                     onClick={() => router.push('/contact')}
-                    className="rounded-3xl border border-gray-200 bg-gray-50 px-5 py-4 text-left transition hover:border-green-300 hover:bg-white"
-                  >
-                    <p className="text-sm font-semibold text-gray-900">Need Help?</p>
-                    <p className="mt-2 text-sm text-gray-600">Contact support or ask your doctor for guidance.</p>
-                  </button>
+                    title="Need Help?"
+                    note="Contact support or ask your doctor for guidance if anything feels unclear."
+                    icon={<FiUsers className="text-amber-700 text-xl" />}
+                    tone="amber"
+                  />
                 </div>
               </section>
             </div>
 
             <aside className="space-y-6">
-              <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-6">
+              <div className="bg-white rounded-[2rem] border border-green-100 shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-900">Your Progress</h2>
                 <p className="mt-2 text-gray-600">Quick overview of your current milestones.</p>
                 <div className="mt-6 grid gap-4">
@@ -362,7 +367,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-6">
+              <div className="bg-white rounded-[2rem] border border-green-100 shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-900">Navigation</h2>
                 <div className="mt-5 grid gap-3">
                   <button
@@ -389,88 +394,144 @@ export default function DashboardPage() {
   return (
     <>
       <Navbar />
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(187,247,208,0.25),_transparent_30%),linear-gradient(180deg,#f8fdf8_0%,#f3f6fb_100%)]">
         <main className="flex-1 p-6 space-y-6">
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Dr. {user.name}&apos;s Dashboard</h1>
-              <p className="text-gray-500">Manage patients, plans, and follow-ups.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <input type="text" placeholder="Search patients..." value={query} onChange={(e) => setQuery(e.target.value)} className="border rounded-lg px-3 py-2 shadow-sm outline-none w-52" />
-              <select value={doshaFilter} onChange={(e) => setDoshaFilter(e.target.value as Patient["dosha"] | "")} className="border rounded-lg px-3 py-2 shadow-sm outline-none">
-                <option value="">All Doshas</option>
-                <option value="Vata">Vata</option>
-                <option value="Pitta">Pitta</option>
-                <option value="Kapha">Kapha</option>
-                <option value="Mixed">Mixed</option>
-              </select>
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as Patient["status"] | "")} className="border rounded-lg px-3 py-2 shadow-sm outline-none">
-                <option value="">All Status</option>
-                <option value="New">New</option>
-                <option value="On Plan">On Plan</option>
-                <option value="Follow-up Due">Follow-up Due</option>
-                <option value="Completed">Completed</option>
-              </select>
-              <button onClick={() => setShowAdd(true)} className="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 flex items-center gap-2"><FiPlus /> Add Patient</button>
-            </div>
-          </header>
+          <div className="mx-auto max-w-7xl space-y-6">
+            <section className="overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-[0_24px_70px_-36px_rgba(22,101,52,0.32)]">
+              <div className="grid gap-6 bg-[linear-gradient(135deg,rgba(21,128,61,0.08),rgba(224,242,254,0.55))] p-8 lg:grid-cols-[1.2fr_0.8fr]">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/85 px-4 py-2 text-sm font-medium text-green-800 shadow-sm">
+                    <FiUser />
+                    Doctor workspace
+                  </div>
+                  <h1 className="mt-4 text-3xl font-bold text-gray-900">
+                    Dr. {user.name}&apos;s Dashboard
+                  </h1>
+                  <p className="mt-3 max-w-2xl text-gray-600">
+                    Manage patients, create plans, and stay on top of follow-ups from one clean workspace.
+                  </p>
+                </div>
 
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 rounded-3xl">
-            <StatCard title="Total Patients" value={totals.totalPatients} icon={<FiUsers className="text-green-600 text-2xl" />} />
-            <StatCard title="Active Plans" value={totals.activePlans} icon={<FiActivity className="text-blue-600 text-2xl" />} />
-            <StatCard title="Follow-ups" value={totals.followUps} icon={<FiRefreshCw className="text-yellow-500 text-2xl" />} />
-            <StatCard title="Alerts" value={totals.alerts} icon={<FiAlertTriangle className="text-red-500 text-2xl" />} />
-          </section>
-
-          <section className="bg-white p-6 rounded-xl shadow">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-xl font-semibold">Patient List</h2>
-                <p className="text-gray-500 mt-1">View patient details and assign diet plans.</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-3xl bg-white/90 p-5 shadow-sm">
+                    <p className="text-sm text-green-700">Patient Records</p>
+                    <p className="mt-2 text-2xl font-semibold text-gray-900">{totals.totalPatients}</p>
+                  </div>
+                  <div className="rounded-3xl bg-white/90 p-5 shadow-sm">
+                    <p className="text-sm text-blue-700">Active Plans</p>
+                    <p className="mt-2 text-2xl font-semibold text-gray-900">{totals.activePlans}</p>
+                  </div>
+                </div>
               </div>
-              <span className="text-sm text-gray-500">{filteredPatients.length} results</span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="text-gray-500 border-b border-gray-200">
-                    <th className="p-3 text-left font-medium">Name</th>
-                    <th className="p-3 font-medium">Age / Sex</th>
-                    <th className="p-3 font-medium">Dosha</th>
-                    <th className="p-3 font-medium">Status</th>
-                    <th className="p-3 font-medium">Adherence</th>
-                    <th className="p-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPatients.map((patient) => (
-                    <tr key={patient.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="p-3 font-medium text-gray-800">{patient.name}</td>
-                      <td className="p-3 text-center text-gray-600">{patient.age ?? '-'} / {patient.sex}</td>
-                      <td className="p-3 text-center text-gray-600">{patient.dosha}</td>
-                      <td className="p-3 text-center text-gray-600">{patient.status}</td>
-                      <td className="p-3">
-                        <div className="w-28 bg-gray-50 rounded-full h-2 overflow-hidden">
-                          <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${patient.adherence ?? 0}%`, background: patient.adherence ?? 0 >= 75 ? '#10b981' : patient.adherence ?? 0 >= 50 ? '#f59e0b' : '#ef4444' }} />
-                        </div>
-                        <span className="text-xs text-gray-400 mt-1 block">{patient.adherence ?? 0}%</span>
-                      </td>
-                      <td className="p-3 flex gap-2 justify-center">
-                        <button onClick={() => router.push(`/patient-details?patientId=${patient.id}`)} className="px-3 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50 text-gray-600">View</button>
-                        <button onClick={() => router.push('/diet-doc')} className="px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Create Plan</button>
-                      </td>
+            </section>
+
+            <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+              <StatCard title="Total Patients" value={totals.totalPatients} icon={<FiUsers className="text-green-600 text-2xl" />} />
+              <StatCard title="Active Plans" value={totals.activePlans} icon={<FiActivity className="text-blue-600 text-2xl" />} />
+              <StatCard title="Follow-ups" value={totals.followUps} icon={<FiRefreshCw className="text-yellow-500 text-2xl" />} />
+              <StatCard title="Alerts" value={totals.alerts} icon={<FiAlertTriangle className="text-red-500 text-2xl" />} />
+            </section>
+
+            <section className="rounded-[2rem] border border-green-100 bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-900">Patient Management</h2>
+                  <p className="mt-2 text-gray-600">Search, filter, and jump into patient records or plan creation quickly.</p>
+                </div>
+                <button
+                  onClick={() => setShowAdd(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-green-700/20 transition hover:bg-green-700"
+                >
+                  <FiPlus />
+                  Add Patient
+                </button>
+              </div>
+
+              <div className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_0.6fr_0.6fr]">
+                <label className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                  <FiSearch className="text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search patients..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="w-full bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400"
+                  />
+                </label>
+                <select value={doshaFilter} onChange={(e) => setDoshaFilter(e.target.value as Patient["dosha"] | "")} className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 outline-none">
+                  <option value="">All Doshas</option>
+                  <option value="Vata">Vata</option>
+                  <option value="Pitta">Pitta</option>
+                  <option value="Kapha">Kapha</option>
+                  <option value="Mixed">Mixed</option>
+                </select>
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as Patient["status"] | "")} className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 outline-none">
+                  <option value="">All Status</option>
+                  <option value="New">New</option>
+                  <option value="On Plan">On Plan</option>
+                  <option value="Follow-up Due">Follow-up Due</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+            </section>
+
+            <section className="bg-white p-6 rounded-[2rem] border border-green-100 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Patient List</h2>
+                  <p className="text-gray-500 mt-1">View patient details and assign diet plans.</p>
+                </div>
+                <span className="inline-flex w-fit rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
+                  {filteredPatients.length} results
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-separate border-spacing-y-3 text-sm">
+                  <thead>
+                    <tr className="text-gray-500">
+                      <th className="p-3 text-left font-medium">Name</th>
+                      <th className="p-3 font-medium">Age / Sex</th>
+                      <th className="p-3 font-medium">Dosha</th>
+                      <th className="p-3 font-medium">Status</th>
+                      <th className="p-3 font-medium">Adherence</th>
+                      <th className="p-3 font-medium">Actions</th>
                     </tr>
-                  ))}
-                  {filteredPatients.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-6 text-center text-gray-400">No patients assigned yet. Add a patient to begin.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                  </thead>
+                  <tbody>
+                    {filteredPatients.map((patient) => (
+                      <tr key={patient.id} className="rounded-3xl bg-gray-50 shadow-sm">
+                        <td className="rounded-l-2xl p-4 font-medium text-gray-800">{patient.name}</td>
+                        <td className="p-4 text-center text-gray-600">{patient.age ?? '-'} / {patient.sex}</td>
+                        <td className="p-4 text-center text-gray-600">
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-700 ring-1 ring-gray-200">
+                            {patient.dosha}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center text-gray-600">{patient.status}</td>
+                        <td className="p-4">
+                          <div className="w-28 bg-gray-200 rounded-full h-2 overflow-hidden mx-auto">
+                            <div className="h-2 rounded-full transition-all duration-300" style={{ width: `${patient.adherence ?? 0}%`, background: patient.adherence ?? 0 >= 75 ? '#10b981' : patient.adherence ?? 0 >= 50 ? '#f59e0b' : '#ef4444' }} />
+                          </div>
+                          <span className="text-xs text-gray-400 mt-2 block text-center">{patient.adherence ?? 0}%</span>
+                        </td>
+                        <td className="rounded-r-2xl p-4">
+                          <div className="flex gap-2 justify-center">
+                            <button onClick={() => router.push(`/patient-details?patientId=${patient.id}`)} className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-100">View</button>
+                            <button onClick={() => router.push('/diet-doc')} className="rounded-full bg-green-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-green-700">Create Plan</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredPatients.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-gray-400">No patients assigned yet. Add a patient to begin.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
         </main>
       </div>
 
@@ -524,13 +585,55 @@ function PatientCard({
   color: 'green' | 'blue';
 }) {
   return (
-    <div className={`p-6 rounded-3xl shadow-sm ${
-      color === 'green' ? 'bg-green-50' : 'bg-blue-50'
+    <div className={`rounded-[1.75rem] border p-6 shadow-sm ${
+      color === 'green'
+        ? 'border-green-100 bg-[linear-gradient(180deg,#f4fbf5_0%,#ffffff_100%)]'
+        : 'border-blue-100 bg-[linear-gradient(180deg,#f3f8ff_0%,#ffffff_100%)]'
     }`}>
-      <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-      <p className="text-3xl font-bold text-gray-900 mt-3">{value}</p>
-      <p className="text-sm text-gray-600 mt-2">{note}</p>
+      <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] ${
+        color === 'green' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+      }`}>
+        {title}
+      </div>
+      <p className="mt-4 text-3xl font-bold text-gray-900">{value}</p>
+      <p className="mt-3 text-sm leading-6 text-gray-600">{note}</p>
     </div>
+  );
+}
+
+function DashboardActionCard({
+  onClick,
+  title,
+  note,
+  icon,
+  tone,
+}: {
+  onClick: () => void;
+  title: string;
+  note: string;
+  icon: React.ReactNode;
+  tone: 'green' | 'blue' | 'amber';
+}) {
+  const toneClasses = {
+    green: 'bg-emerald-50 border-emerald-100',
+    blue: 'bg-sky-50 border-sky-100',
+    amber: 'bg-amber-50 border-amber-100',
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-[1.5rem] border p-5 text-left transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm ${toneClasses[tone]}`}
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm">
+          {icon}
+        </div>
+        <FiArrowRight className="mt-1 text-gray-400" />
+      </div>
+      <p className="mt-4 text-base font-semibold text-gray-900">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-gray-600">{note}</p>
+    </button>
   );
 }
 
@@ -544,11 +647,13 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="p-6 rounded-2xl shadow-lg flex items-center gap-4 bg-white">
-      <div className="p-3 bg-gray-50 rounded-full">{icon}</div>
-      <div>
-        <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-        <p className="text-2xl font-bold">{value}</p>
+    <div className="rounded-[1.75rem] border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex items-center gap-4">
+        <div className="rounded-2xl bg-gray-50 p-3">{icon}</div>
+        <div>
+          <h3 className="text-sm font-medium text-gray-500">{title}</h3>
+          <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+        </div>
       </div>
     </div>
   );

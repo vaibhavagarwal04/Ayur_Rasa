@@ -24,26 +24,29 @@ export default function Footer() {
           <h2 className="text-lg font-bold text-green-600 mb-3">Quick Links</h2>
           <ul className="space-y-2 text-sm">
             <li>
-              <Link href="/" className="hover:text-green-600 transition">
+              <Link href="/#home" className="hover:text-green-600 transition">
                 Home
               </Link>
             </li>
             <li>
               <Link
-                href="/assessment"
+                href="/#features"
                 className="hover:text-green-600 transition"
               >
-                Dosha Assessment
+                Features
               </Link>
             </li>
             <li>
-              <Link href="/diet" className="hover:text-green-600 transition">
-                Weekly Diet Plan
+              <Link href="/#dosha" className="hover:text-green-600 transition">
+                Dosha
               </Link>
             </li>
             <li>
-              <Link href="/about" className="hover:text-green-600 transition">
-                About Us
+              <Link
+                href="/#how-it-works"
+                className="hover:text-green-600 transition"
+              >
+                How it Works
               </Link>
             </li>
           </ul>
@@ -85,6 +88,36 @@ export default function Footer() {
 
       <div className="bg-[#1A3129] text-center py-3 text-sm">
         © {new Date().getFullYear()} Ayurvedic Wellness. All rights reserved.
+      </div>
+
+      {/* Mobile bottom navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-inner">
+        <div className="flex justify-between items-center px-4 py-2 text-sm">
+          <Link
+            href="/#home"
+            className="text-gray-700 hover:text-green-600 transition"
+          >
+            Home
+          </Link>
+          <Link
+            href="/#features"
+            className="text-gray-700 hover:text-green-600 transition"
+          >
+            Features
+          </Link>
+          <Link
+            href="/#dosha"
+            className="text-gray-700 hover:text-green-600 transition"
+          >
+            Dosha
+          </Link>
+          <Link
+            href="/#how-it-works"
+            className="text-gray-700 hover:text-green-600 transition"
+          >
+            Works
+          </Link>
+        </div>
       </div>
     </footer>
   );

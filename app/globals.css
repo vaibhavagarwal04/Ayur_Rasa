@@ -19,7 +19,17 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-work-sans), sans-serif;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 4.5rem;
+  }
 }
 

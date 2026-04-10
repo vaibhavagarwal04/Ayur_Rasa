@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock3, Salad, Sparkles } from "lucide-react";
 import { getAuthToken, getAuthUser, patientApi, dietPlanApi } from "../lib/api";
 import { daysOfWeek as fallbackDaysOfWeek, mealsOfDay, doshaFoods } from "../data/Food";
 
@@ -273,6 +273,19 @@ const WeeklyDiet: React.FC = () => {
   const dailyMeals = activePlan
     ? activePlan.meals.filter((meal) => meal.dayOfWeek === selectedDay)
     : [];
+  const totalFoods = dailyMeals.reduce(
+    (count, meal) => count + (meal.foods?.length ?? 0),
+    0
+  );
+  const totalCalories = dailyMeals.reduce(
+    (sum, meal) =>
+      sum +
+      (meal.foods?.reduce(
+        (mealSum, entry) => mealSum + (Number(entry.calories) || 0),
+        0
+      ) ?? 0),
+    0
+  );
 
   const formatDate = (value: string) => {
     if (!value) return "-";
@@ -294,24 +307,15 @@ const WeeklyDiet: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="flex bg-[#f9fafb] min-h-screen font-sans">
-        <main className="flex-1 p-8">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(187,247,208,0.35),_transparent_32%),linear-gradient(180deg,#f7fdf8_0%,#f3f7f4_100%)]">
+        <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8">
           <button
             onClick={() => router.back()}
-            className="mb-6 flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition shadow-md"
+            className="mb-6 flex w-fit items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-green-200 hover:text-green-700"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="h-4 w-4" />
             <span>Go Back</span>
           </button>
-
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-green-800 mb-2">
-              Weekly Diet Plan
-            </h1>
-            <p className="text-gray-500 max-w-2xl">
-              Personalized recommendations based on your assessment and doctor’s guidance.
-            </p>
-          </div>
 
           {error ? (
             <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-red-700">
@@ -331,35 +335,127 @@ const WeeklyDiet: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              <section className="rounded-3xl bg-white p-6 shadow-sm border border-green-100">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <section className="overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-[0_24px_80px_-36px_rgba(22,101,52,0.35)]">
+                <div className="grid gap-6 bg-[linear-gradient(135deg,rgba(21,128,61,0.08),rgba(187,247,208,0.42))] px-6 py-8 lg:grid-cols-[1.45fr_0.95fr] lg:px-8">
                   <div>
-                    <h2 className="text-2xl font-semibold text-gray-900">
-                      Plan for {activePlan.patient?.user?.name || "you"}
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Assigned by Dr. {activePlan.doctor?.user?.name || "your doctor"}
+                    <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white/80 px-4 py-2 text-sm font-medium text-green-800 shadow-sm backdrop-blur">
+                      <Sparkles className="h-4 w-4" />
+                      Personalized nourishment plan
+                    </div>
+                    <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                      Weekly Diet Plan
+                    </h1>
+                    <p className="mt-3 max-w-2xl text-base leading-7 text-gray-600">
+                      Personalized recommendations based on your assessment and
+                      doctor&apos;s guidance.
                     </p>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <div className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-sm backdrop-blur">
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-green-700">
+                          Patient
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-gray-900">
+                          {activePlan.patient?.user?.name || "You"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-white/60 bg-white/85 px-4 py-3 shadow-sm backdrop-blur">
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-green-700">
+                          Assigned By
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-gray-900">
+                          Dr. {activePlan.doctor?.user?.name || "Your doctor"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid gap-2 sm:grid-cols-3">
-                    <div className="rounded-2xl bg-green-50 p-4">
-                      <p className="text-xs uppercase tracking-widest text-green-700">Start</p>
-                      <p className="font-semibold text-gray-900">{formatDate(activePlan.startDate)}</p>
+
+                  <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                    <div className="rounded-3xl border border-white/60 bg-white/90 p-5 shadow-sm backdrop-blur">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.24em] text-green-700">
+                            Start Date
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-gray-900">
+                            {formatDate(activePlan.startDate)}
+                          </p>
+                        </div>
+                        <CalendarDays className="h-5 w-5 text-green-700" />
+                      </div>
                     </div>
-                    <div className="rounded-2xl bg-green-50 p-4">
-                      <p className="text-xs uppercase tracking-widest text-green-700">End</p>
-                      <p className="font-semibold text-gray-900">{formatDate(activePlan.endDate)}</p>
+                    <div className="rounded-3xl border border-white/60 bg-white/90 p-5 shadow-sm backdrop-blur">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.24em] text-green-700">
+                            End Date
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-gray-900">
+                            {formatDate(activePlan.endDate)}
+                          </p>
+                        </div>
+                        <CalendarDays className="h-5 w-5 text-green-700" />
+                      </div>
                     </div>
-                    <div className="rounded-2xl bg-green-50 p-4">
-                      <p className="text-xs uppercase tracking-widest text-green-700">Week</p>
-                      <p className="font-semibold text-gray-900">{activePlan.weekNumber || 1}</p>
+                    <div className="rounded-3xl border border-white/60 bg-white/90 p-5 shadow-sm backdrop-blur">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.24em] text-green-700">
+                            Week Number
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-gray-900">
+                            {activePlan.weekNumber || 1}
+                          </p>
+                        </div>
+                        <Sparkles className="h-5 w-5 text-green-700" />
+                      </div>
                     </div>
                   </div>
                 </div>
               </section>
 
-              <section className="rounded-3xl bg-white p-6 shadow-sm border border-green-100">
-                <div className="mb-5 flex flex-wrap gap-3">
+              <section className="rounded-[2rem] border border-green-100 bg-white p-6 shadow-sm">
+                <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-700">
+                      Available Plans
+                    </p>
+                    <h2 className="mt-2 text-2xl font-semibold text-gray-900">
+                      Pick your week and day
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm text-gray-600">
+                      Switch between saved plans, then explore each day&apos;s
+                      meals with quick nutrition highlights.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[420px]">
+                    <div className="rounded-3xl bg-emerald-50 p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-emerald-700">
+                        Selected Day
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-gray-900">
+                        {selectedDay}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl bg-amber-50 p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-amber-700">
+                        Meals
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-gray-900">
+                        {dailyMeals.length}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl bg-sky-50 p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-sky-700">
+                        Calories
+                      </p>
+                      <p className="mt-2 text-lg font-semibold text-gray-900">
+                        {totalCalories || 0} kcal
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-5 mt-8 flex flex-wrap gap-3">
                   {plans.map((plan, index) => (
                     <button
                       key={plan.id}
@@ -367,9 +463,9 @@ const WeeklyDiet: React.FC = () => {
                         setSelectedPlanIndex(index);
                         setSelectedDay(plan.meals?.[0]?.dayOfWeek || daysOfWeek[0]);
                       }}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                      className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
                         index === selectedPlanIndex
-                          ? "bg-green-700 text-white"
+                          ? "bg-green-700 text-white shadow-lg shadow-green-700/20"
                           : "bg-green-50 text-green-700 hover:bg-green-100"
                       }`}
                     >
@@ -378,18 +474,21 @@ const WeeklyDiet: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="mb-6 flex flex-wrap gap-3">
+                <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
                   {availableDays.map((day) => (
                     <button
                       key={day}
                       onClick={() => setSelectedDay(day)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                      className={`rounded-3xl border px-4 py-4 text-left transition ${
                         selectedDay === day
-                          ? "bg-green-700 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          ? "border-green-700 bg-green-700 text-white shadow-lg shadow-green-700/20"
+                          : "border-gray-200 bg-gray-50 text-gray-700 hover:border-green-200 hover:bg-green-50"
                       }`}
                     >
-                      {day}
+                      <p className="text-xs uppercase tracking-[0.2em] opacity-70">
+                        Day
+                      </p>
+                      <p className="mt-2 text-sm font-semibold">{day}</p>
                     </button>
                   ))}
                 </div>
@@ -399,57 +498,180 @@ const WeeklyDiet: React.FC = () => {
                     No meals assigned for {selectedDay}.
                   </div>
                 ) : (
-                  <div className="grid gap-6">
-                    {dailyMeals.map((meal: DietPlanMeal) => (
-                      <div key={meal.id} className="rounded-3xl bg-gray-50 p-6 border border-green-100 shadow-sm">
-                        <div className="flex justify-between items-center mb-4">
-                          <div>
-                            <h3 className="text-xl font-semibold text-gray-900">{meal.mealType}</h3>
-                            <p className="text-sm text-gray-500">{meal.time}</p>
-                          </div>
-                          <span className="text-sm text-green-700 font-semibold">{meal.dayOfWeek}</span>
-                        </div>
-
-                        <div className="space-y-4">
-                          {meal.foods?.length > 0 ? (
-                            meal.foods.map((entry: DietPlanFoodItem) => (
-                              <div key={entry.id} className="rounded-2xl bg-white p-4 border border-gray-200">
-                                <div className="flex justify-between items-start gap-4">
-                                  <div>
-                                    <p className="font-semibold text-gray-900">{entry.food?.name || "Food item"}</p>
-                                    <p className="text-sm text-gray-500 mt-1">Portion: {entry.portion || "1 serving"}</p>
-                                  </div>
-                                  <div className="text-right text-sm text-gray-500">
-                                    <p>Calories: {entry.calories ?? "-"}</p>
-                                    <p>Protein: {entry.protein ?? "-"}g</p>
-                                    <p>Carbs: {entry.carbs ?? "-"}g</p>
-                                    <p>Fats: {entry.fats ?? "-"}g</p>
-                                  </div>
+                  <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+                    <div className="grid gap-5">
+                      {dailyMeals.map((meal: DietPlanMeal) => (
+                        <div
+                          key={meal.id}
+                          className="overflow-hidden rounded-[1.75rem] border border-green-100 bg-[linear-gradient(180deg,#ffffff_0%,#f8fcf9_100%)] shadow-sm"
+                        >
+                          <div className="flex flex-col gap-4 border-b border-green-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 text-green-700">
+                                <Salad className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <h3 className="text-xl font-semibold text-gray-900">
+                                  {meal.mealType}
+                                </h3>
+                                <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <Clock3 className="h-4 w-4" />
+                                    {meal.time}
+                                  </span>
+                                  <span className="rounded-full bg-green-50 px-3 py-1 font-medium text-green-700">
+                                    {meal.dayOfWeek}
+                                  </span>
                                 </div>
                               </div>
-                            ))
-                          ) : (
-                            <p className="text-gray-500">No foods added for this meal yet.</p>
-                          )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 sm:min-w-[210px]">
+                              <div className="rounded-2xl bg-white p-3 text-center shadow-sm ring-1 ring-green-100">
+                                <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+                                  Foods
+                                </p>
+                                <p className="mt-1 text-lg font-semibold text-gray-900">
+                                  {meal.foods?.length ?? 0}
+                                </p>
+                              </div>
+                              <div className="rounded-2xl bg-white p-3 text-center shadow-sm ring-1 ring-green-100">
+                                <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
+                                  Calories
+                                </p>
+                                <p className="mt-1 text-lg font-semibold text-gray-900">
+                                  {meal.foods?.reduce(
+                                    (sum, entry) =>
+                                      sum + (Number(entry.calories) || 0),
+                                    0
+                                  ) ?? 0}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4 px-6 py-5">
+                            {meal.foods?.length > 0 ? (
+                              meal.foods.map((entry: DietPlanFoodItem) => (
+                                <div
+                                  key={entry.id}
+                                  className="rounded-[1.5rem] border border-gray-200 bg-white p-4 shadow-sm"
+                                >
+                                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                    <div>
+                                      <p className="text-lg font-semibold text-gray-900">
+                                        {entry.food?.name || "Food item"}
+                                      </p>
+                                      <p className="mt-2 text-sm text-gray-500">
+                                        Portion: {entry.portion || "1 serving"}
+                                      </p>
+                                    </div>
+                                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                      <div className="rounded-2xl bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                                        Calories:{" "}
+                                        <span className="font-semibold text-gray-900">
+                                          {entry.calories ?? "-"}
+                                        </span>
+                                      </div>
+                                      <div className="rounded-2xl bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                                        Protein:{" "}
+                                        <span className="font-semibold text-gray-900">
+                                          {entry.protein ?? "-"}g
+                                        </span>
+                                      </div>
+                                      <div className="rounded-2xl bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                                        Carbs:{" "}
+                                        <span className="font-semibold text-gray-900">
+                                          {entry.carbs ?? "-"}g
+                                        </span>
+                                      </div>
+                                      <div className="rounded-2xl bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                                        Fats:{" "}
+                                        <span className="font-semibold text-gray-900">
+                                          {entry.fats ?? "-"}g
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-gray-500">
+                                No foods added for this meal yet.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <aside className="space-y-5">
+                      <div className="rounded-[1.75rem] border border-green-100 bg-white p-5 shadow-sm">
+                        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-green-700">
+                          Day Summary
+                        </p>
+                        <div className="mt-5 grid gap-3">
+                          <div className="rounded-3xl bg-green-50 p-4">
+                            <p className="text-sm text-green-700">
+                              Selected Day
+                            </p>
+                            <p className="mt-1 text-2xl font-semibold text-gray-900">
+                              {selectedDay}
+                            </p>
+                          </div>
+                          <div className="rounded-3xl bg-amber-50 p-4">
+                            <p className="text-sm text-amber-700">
+                              Planned Meals
+                            </p>
+                            <p className="mt-1 text-2xl font-semibold text-gray-900">
+                              {dailyMeals.length}
+                            </p>
+                          </div>
+                          <div className="rounded-3xl bg-sky-50 p-4">
+                            <p className="text-sm text-sky-700">Food Items</p>
+                            <p className="mt-1 text-2xl font-semibold text-gray-900">
+                              {totalFoods}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    ))}
+
+                      <div className="rounded-[1.75rem] border border-green-100 bg-[linear-gradient(180deg,#f7fff8_0%,#ffffff_100%)] p-5 shadow-sm">
+                        <div className="flex items-center gap-2 text-green-700">
+                          <Sparkles className="h-4 w-4" />
+                          <p className="text-sm font-semibold uppercase tracking-[0.24em]">
+                            Helpful Tip
+                          </p>
+                        </div>
+                        <p className="mt-4 text-sm leading-6 text-gray-600">
+                          Try to keep meal timing consistent through the week.
+                          Small, steady routines usually make Ayurvedic plans
+                          easier to follow.
+                        </p>
+                      </div>
+                    </aside>
                   </div>
                 )}
               </section>
 
               {(activePlan.recommendations || activePlan.notes) && (
-                <section className="rounded-3xl bg-white p-6 shadow-sm border border-green-100">
+                <section className="rounded-[2rem] border border-green-100 bg-white p-6 shadow-sm">
                   {activePlan.recommendations && (
-                    <div className="mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Recommendations</h3>
-                      <p className="text-gray-600 mt-2">{activePlan.recommendations}</p>
+                    <div className="mb-6 rounded-3xl bg-green-50 p-5">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Recommendations
+                      </h3>
+                      <p className="mt-2 text-gray-600">
+                        {activePlan.recommendations}
+                      </p>
                     </div>
                   )}
                   {activePlan.notes && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Doctor Notes</h3>
-                      <p className="text-gray-600 mt-2">{activePlan.notes}</p>
+                    <div className="rounded-3xl bg-amber-50 p-5">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Doctor Notes
+                      </h3>
+                      <p className="mt-2 text-gray-600">{activePlan.notes}</p>
                     </div>
                   )}
                 </section>
