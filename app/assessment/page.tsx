@@ -11,90 +11,225 @@ const quizQuestions = [
     id: "bodyFrame",
     label: "Body Frame",
     options: [
-      { value: "vata", text: "Small/Thin" },
+      { value: "vata", text: "Thin and Lean" },
       { value: "pitta", text: "Medium" },
-      { value: "kapha", text: "Large/Heavy" },
+      { value: "kapha", text: "Well Built" },
     ],
   },
   {
-    id: "skinType",
-    label: "Skin Type",
+    id: "typeOfHair",
+    label: "Type of Hair",
     options: [
       { value: "vata", text: "Dry" },
-      { value: "pitta", text: "Oily & Sensitive" },
-      { value: "kapha", text: "Thick & Cool" },
+      { value: "pitta", text: "Normal" },
+      { value: "kapha", text: "Greasy" },
     ],
   },
   {
-    id: "hair",
-    label: "Hair",
+    id: "colorOfHair",
+    label: "Color of Hair",
     options: [
-      { value: "vata", text: "Dry & Curly" },
-      { value: "pitta", text: "Straight & Fine" },
-      { value: "kapha", text: "Thick & Lustrous" },
+      { value: "vata", text: "Grey" },
+      { value: "pitta", text: "Brown" },
+      { value: "kapha", text: "Black" },
     ],
   },
   {
-    id: "eyes",
-    label: "Eyes",
+    id: "skin",
+    label: "Skin",
     options: [
-      { value: "vata", text: "Small & Dry" },
-      { value: "pitta", text: "Medium, Intense" },
-      { value: "kapha", text: "Large, Attractive" },
+      { value: "vata", text: "Dry,Rough" },
+      { value: "pitta", text: "Soft,Sweating" },
+      { value: "kapha", text: "Moist,Greasy" },
     ],
   },
   {
-    id: "talkingStyle",
-    label: "Talking Style",
+    id: "complexion",
+    label: "Complexion",
+    options: [
+      { value: "vata", text: "Dark" },
+      { value: "pitta", text: "Pinkish" },
+      { value: "kapha", text: "Glowing" },
+    ],
+  },
+  {
+    id: "bodyWeight",
+    label: "Body Weight",
+    options: [
+      { value: "vata", text: "Underweight" },
+      { value: "pitta", text: "Normal" },
+      { value: "kapha", text: "Overweight" },
+    ],
+  },
+  {
+    id: "nails",
+    label: "Nails",
+    options: [
+      { value: "vata", text: "Blackish" },
+      { value: "pitta", text: "Redish" },
+      { value: "kapha", text: "Pinkish" },
+    ],
+  },
+  {
+    id: "teeth",
+    label: "Size and Color of the Teeth",
+    options: [
+      { value: "vata", text: "Irregular,Blackish" },
+      { value: "pitta", text: "Medium,Yellowish" },
+      { value: "kapha", text: "Large,White" },
+    ],
+  },
+  {
+    id: "paceOfWork",
+    label: "Pace of Performing Work",
     options: [
       { value: "vata", text: "Fast" },
-      { value: "pitta", text: "Sharp & Concise" },
-      { value: "kapha", text: "Slow & Calm" },
+      { value: "pitta", text: "Medium" },
+      { value: "kapha", text: "Slow" },
     ],
   },
   {
-    id: "favoriteWeather",
-    label: "Favorite Weather",
+    id: "mentalActivity",
+    label: "Mental Activity",
     options: [
-      { value: "vata", text: "Warm" },
-      { value: "pitta", text: "Cool" },
-      { value: "kapha", text: "Cool & Dry" },
+      { value: "vata", text: "Restless" },
+      { value: "pitta", text: "Aggressive" },
+      { value: "kapha", text: "Stable" },
     ],
   },
   {
     id: "memory",
     label: "Memory",
     options: [
-      { value: "vata", text: "Learns quickly but forgets quickly" },
-      { value: "pitta", text: "Great memory" },
-      { value: "kapha", text: "Slow but long-lasting" },
+      { value: "vata", text: "Short term" },
+      { value: "pitta", text: "Good Memory" },
+      { value: "kapha", text: "Long Term" },
     ],
   },
   {
-    id: "personality",
-    label: "Personality Traits",
+    id: "sleepPattern",
+    label: "Sleep Pattern",
     options: [
-      { value: "vata", text: "Creative" },
-      { value: "pitta", text: "Competitive" },
-      { value: "kapha", text: "Nurturing" },
+      { value: "vata", text: "Less" },
+      { value: "pitta", text: "Moderate" },
+      { value: "kapha", text: "Sleepy" },
     ],
   },
   {
-    id: "stress",
-    label: "Stress Response",
+    id: "weatherConditions",
+    label: "Weather Conditions",
     options: [
-      { value: "vata", text: "Insomnia / Anxiety" },
-      { value: "pitta", text: "Irritability / Anger" },
-      { value: "kapha", text: "Calm but Withdrawn" },
+      { value: "vata", text: "Dislike Cold" },
+      { value: "pitta", text: "Dislike Heat" },
+      { value: "kapha", text: "Dislike Moist" },
     ],
   },
   {
-    id: "lifestyle",
-    label: "Lifestyle Patterns",
+    id: "adverseReaction",
+    label: "Reaction under Adverse Situations",
     options: [
-      { value: "vata", text: "Erratic Appetite & Light Sleep" },
-      { value: "pitta", text: "Strong Appetite & Moderate Sleep" },
-      { value: "kapha", text: "Steady Appetite & Deep Sleep" },
+      { value: "vata", text: "Anxiety" },
+      { value: "pitta", text: "Anger" },
+      { value: "kapha", text: "Calm" },
+    ],
+  },
+  {
+    id: "mood",
+    label: "Mood",
+    options: [
+      { value: "vata", text: "Changes Quickly" },
+      { value: "pitta", text: "Constant" },
+      { value: "kapha", text: "Changes Slowly" },
+    ],
+  },
+  {
+    id: "eatingHabit",
+    label: "Eating Habit",
+    options: [
+      { value: "vata", text: "Irregular Chewing" },
+      { value: "pitta", text: "Improper Chewing" },
+      { value: "kapha", text: "Proper Chewing" },
+    ],
+  },
+  {
+    id: "hunger",
+    label: "Hunger",
+    options: [
+      { value: "vata", text: "Irregular" },
+      { value: "pitta", text: "Sudden and Sharp" },
+      { value: "kapha", text: "Skips Meal" },
+    ],
+  },
+  {
+    id: "bodyTemperature",
+    label: "Body Temperature",
+    options: [
+      { value: "vata", text: "Less than Normal" },
+      { value: "pitta", text: "More than Normal" },
+      { value: "kapha", text: "Normal" },
+    ],
+  },
+  {
+    id: "joints",
+    label: "Joints",
+    options: [
+      { value: "vata", text: "Weak" },
+      { value: "pitta", text: "Healthy" },
+      { value: "kapha", text: "Heavy" },
+    ],
+  },
+  {
+    id: "nature",
+    label: "Nature",
+    options: [
+      { value: "vata", text: "Jealous,Fearful" },
+      { value: "pitta", text: "Egoistic,Fearless" },
+      { value: "kapha", text: "Forgiving,Grateful" },
+    ],
+  },
+  {
+    id: "bodyEnergy",
+    label: "Body Energy",
+    options: [
+      { value: "vata", text: "Low" },
+      { value: "pitta", text: "High" },
+      { value: "kapha", text: "Medium" },
+    ],
+  },
+  {
+    id: "qualityOfVoice",
+    label: "Quality of Voice",
+    options: [
+      { value: "vata", text: "Rough" },
+      { value: "pitta", text: "Fast" },
+      { value: "kapha", text: "Deep" },
+    ],
+  },
+  {
+    id: "dreams",
+    label: "Dreams",
+    options: [
+      { value: "vata", text: "Sky" },
+      { value: "pitta", text: "Fire" },
+      { value: "kapha", text: "Water" },
+    ],
+  },
+  {
+    id: "socialRelations",
+    label: "Social Relations",
+    options: [
+      { value: "vata", text: "Ambivert" },
+      { value: "pitta", text: "Extrovert" },
+      { value: "kapha", text: "Introvert" },
+    ],
+  },
+  {
+    id: "bodyOdor",
+    label: "Body Odor",
+    options: [
+      { value: "vata", text: "Negligible" },
+      { value: "pitta", text: "Strong" },
+      { value: "kapha", text: "Mild" },
     ],
   },
 ];
@@ -177,32 +312,232 @@ export default function AssessmentPage() {
   };
 
   const calculateDosha = async () => {
-    const counts = { vata: 0, pitta: 0, kapha: 0 };
-    const answeredQuestions = Object.values(answers).length;
+  const answeredQuestions = Object.keys(answers).length;
 
-    if (answeredQuestions === 0) {
-      alert("Please answer at least one question to get a result.");
-      return;
+  if (answeredQuestions < quizQuestions.length) {
+    alert(
+      `Please answer all ${quizQuestions.length} questions before calculating your Dosha.`
+    );
+    return;
+  }
+
+  if (!patientId) {
+    alert("Unable to identify your patient profile. Please refresh the page.");
+    return;
+  }
+
+  setIsSubmitting(true);
+  setSubmitError("");
+
+  try {
+    // Convert frontend answer IDs into the exact
+    // column names and values used by the ML dataset.
+    const mlInput = {
+      "Body Frame":
+        answers.bodyFrame === "vata"
+          ? "Thin and Lean"
+          : answers.bodyFrame === "pitta"
+          ? "Medium"
+          : "Well Built",
+
+      "Type of Hair":
+        answers.typeOfHair === "vata"
+          ? "Dry"
+          : answers.typeOfHair === "pitta"
+          ? "Normal"
+          : "Greasy",
+
+      "Color of Hair":
+        answers.colorOfHair === "vata"
+          ? "Grey"
+          : answers.colorOfHair === "pitta"
+          ? "Brown"
+          : "Black",
+
+      Skin:
+        answers.skin === "vata"
+          ? "Dry,Rough"
+          : answers.skin === "pitta"
+          ? "Soft,Sweating"
+          : "Moist,Greasy",
+
+      Complexion:
+        answers.complexion === "vata"
+          ? "Dark"
+          : answers.complexion === "pitta"
+          ? "Pinkish"
+          : "Glowing",
+
+      "Body Weight":
+        answers.bodyWeight === "vata"
+          ? "Underweight"
+          : answers.bodyWeight === "pitta"
+          ? "Normal"
+          : "Overweight",
+
+      Nails:
+        answers.nails === "vata"
+          ? "Blackish"
+          : answers.nails === "pitta"
+          ? "Redish"
+          : "Pinkish",
+
+      "Size and Color of the Teeth":
+        answers.teeth === "vata"
+          ? "Irregular,Blackish"
+          : answers.teeth === "pitta"
+          ? "Medium,Yellowish"
+          : "Large,White",
+
+      "Pace of Performing Work":
+        answers.paceOfWork === "vata"
+          ? "Fast"
+          : answers.paceOfWork === "pitta"
+          ? "Medium"
+          : "Slow",
+
+      "Mental Activity":
+        answers.mentalActivity === "vata"
+          ? "Restless"
+          : answers.mentalActivity === "pitta"
+          ? "Aggressive"
+          : "Stable",
+
+      Memory:
+        answers.memory === "vata"
+          ? "Short term"
+          : answers.memory === "pitta"
+          ? "Good Memory"
+          : "Long Term",
+
+      "Sleep Pattern":
+        answers.sleepPattern === "vata"
+          ? "Less"
+          : answers.sleepPattern === "pitta"
+          ? "Moderate"
+          : "Sleepy",
+
+      "Weather Conditions":
+        answers.weatherConditions === "vata"
+          ? "Dislike Cold"
+          : answers.weatherConditions === "pitta"
+          ? "Dislike Heat"
+          : "Dislike Moist",
+
+      "Reaction under Adverse Situations":
+        answers.adverseReaction === "vata"
+          ? "Anxiety"
+          : answers.adverseReaction === "pitta"
+          ? "Anger"
+          : "Calm",
+
+      Mood:
+        answers.mood === "vata"
+          ? "Changes Quickly"
+          : answers.mood === "pitta"
+          ? "Constant"
+          : "Changes Slowly",
+
+      "Eating Habit":
+        answers.eatingHabit === "vata"
+          ? "Irregular Chewing"
+          : answers.eatingHabit === "pitta"
+          ? "Improper Chewing"
+          : "Proper Chewing",
+
+      Hunger:
+        answers.hunger === "vata"
+          ? "Irregular"
+          : answers.hunger === "pitta"
+          ? "Sudden and Sharp"
+          : "Skips Meal",
+
+      "Body Temperature":
+        answers.bodyTemperature === "vata"
+          ? "Less than Normal"
+          : answers.bodyTemperature === "pitta"
+          ? "More than Normal"
+          : "Normal",
+
+      Joints:
+        answers.joints === "vata"
+          ? "Weak"
+          : answers.joints === "pitta"
+          ? "Healthy"
+          : "Heavy",
+
+      Nature:
+        answers.nature === "vata"
+          ? "Jealous,Fearful"
+          : answers.nature === "pitta"
+          ? "Egoistic,Fearless"
+          : "Forgiving,Grateful",
+
+      "Body Energy":
+        answers.bodyEnergy === "vata"
+          ? "Low"
+          : answers.bodyEnergy === "pitta"
+          ? "High"
+          : "Medium",
+
+      "Quality of Voice":
+        answers.qualityOfVoice === "vata"
+          ? "Rough"
+          : answers.qualityOfVoice === "pitta"
+          ? "Fast"
+          : "Deep",
+
+      Dreams:
+        answers.dreams === "vata"
+          ? "Sky"
+          : answers.dreams === "pitta"
+          ? "Fire"
+          : "Water",
+
+      "Social Relations":
+        answers.socialRelations === "vata"
+          ? "Ambivert"
+          : answers.socialRelations === "pitta"
+          ? "Extrovert"
+          : "Introvert",
+
+      "Body Odor":
+        answers.bodyOdor === "vata"
+          ? "Negligible"
+          : answers.bodyOdor === "pitta"
+          ? "Strong"
+          : "Mild",
+    };
+
+    // Send the 25 answers to the trained ML model
+    const mlResponse = await fetch(
+      "http://localhost:5000/api/dosha/predict",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(mlInput),
+      }
+    );
+
+    const mlResult = await mlResponse.json();
+
+    if (!mlResponse.ok || !mlResult.success) {
+      throw new Error(
+        mlResult.error || mlResult.message || "ML prediction failed."
+      );
     }
 
-    Object.values(answers).forEach((value) => {
-      counts[value as keyof typeof counts]++;
-    });
+    const prediction = mlResult.prediction as string;
 
-    const vataPercent = Math.round((counts.vata / answeredQuestions) * 100);
-    const pittaPercent = Math.round((counts.pitta / answeredQuestions) * 100);
-    const kaphaPercent = Math.round((counts.kapha / answeredQuestions) * 100);
-    const primaryDosha =
-      Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "vata";
+    const probabilities = mlResult.probabilities || {};
 
-    if (!patientId) {
-      alert("Unable to identify your patient profile. Please refresh the page.");
-      return;
-    }
+    const vataPercent = Math.round(Number(probabilities.Vata || 0));
+    const pittaPercent = Math.round(Number(probabilities.Pitta || 0));
+    const kaphaPercent = Math.round(Number(probabilities.Kapha || 0));
 
-    setIsSubmitting(true);
-    setSubmitError("");
-
+    // Save the ML result in the existing assessment system
     const response = await assessmentApi.submit({
       patientId,
       answers,
@@ -211,18 +546,31 @@ export default function AssessmentPage() {
       kaphaScore: kaphaPercent,
     });
 
-    setIsSubmitting(false);
-
     if (!response.success) {
-      setSubmitError(response.message || "Failed to submit assessment.");
+      setSubmitError(
+        response.message || "Failed to save assessment."
+      );
       return;
     }
 
+    // Open the existing result page with ML prediction
     router.push(
-      `/assessment-result?vata=${vataPercent}&pitta=${pittaPercent}&kapha=${kaphaPercent}&primary=${primaryDosha}`
+      `/assessment-result?vata=${vataPercent}&pitta=${pittaPercent}&kapha=${kaphaPercent}&primary=${encodeURIComponent(
+        prediction
+      )}`
     );
-  };
+  } catch (error) {
+    console.error("Dosha ML prediction error:", error);
 
+    setSubmitError(
+      error instanceof Error
+        ? error.message
+        : "Unable to calculate Dosha using the ML model."
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50">

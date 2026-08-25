@@ -9,6 +9,7 @@ import patientRoutes from './routes/patients.routes';
 import assessmentRoutes from './routes/assessments.routes';
 import foodRoutes from './routes/foods.routes';
 import dietPlanRoutes from './routes/diet-plans.routes';
+import doshaRoutes from './routes/dosha.routes';
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
   credentials: true,
 }));
 
@@ -43,6 +44,7 @@ app.use('/api/patients', patientRoutes);
 app.use('/api/assessments', assessmentRoutes);
 app.use('/api/foods', foodRoutes);
 app.use('/api/diet-plans', dietPlanRoutes);
+app.use('/api/dosha', doshaRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
